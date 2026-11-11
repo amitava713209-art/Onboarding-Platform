@@ -1,0 +1,2744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Allied & Last Mile — Exhibition Floorplan Optimizer, Stall Booking & Leads CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Enterprise Navigation Bar -->
+  <header class="app-header">
+    <div class="brand-container">
+      <img src="logo.png" alt="Last Mile" class="brand-logo" onerror="this.style.display='none'">
+      <div class="brand-title">
+        <h1>
+          Allied Exhibition Suite
+          <span class="brand-badge">Last Mile Integrated</span>
+        </h1>
+        <p>CAD Spatial Packing Engine • Stall Allotment &amp; Invoicing • Exhibitor Pipeline CRM</p>
+      </div>
+    </div>
+
+    <!-- Main Workspace Switcher -->
+    <nav class="main-nav-tabs">
+      <button class="nav-tab-btn active" data-view="layout-view">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <span>Floorplan &amp; Bookings</span>
+        <span class="nav-badge" id="nav-stall-count">0</span>
+      </button>
+      <button class="nav-tab-btn" data-view="leads-view">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Last Mile Leads &amp; Onboarding</span>
+        <span class="nav-badge" id="nav-lead-count">0</span>
+      </button>
+      <button class="nav-tab-btn" data-view="payments-view">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span>Payments &amp; Receipts</span>
+        <span class="nav-badge" id="nav-payment-count">0</span>
+      </button>
+    </nav>
+
+    <div class="header-actions">
+      <input type="file" id="spec-file-input" accept=".csv,.txt,.json" style="display: none;">
+      <button class="btn btn-primary" id="quick-book-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+        New Stall Booking
+      </button>
+      <button class="btn" id="export-all-csv-btn">
+        Export CSV
+      </button>
+      <button class="btn btn-danger" id="clear-layout-btn" title="Clear current floorplan layout">
+        Reset Floorplan
+      </button>
+    </div>
+  </header>
+
+  <!-- Executive KPI Ribbon -->
+  <section class="stats-bar">
+    <div class="stat-card">
+      <div>
+        <div class="stat-label">Total Capacity</div>
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-sub" id="stat-hall-dims">No floorplan active</div>
+      </div>
+    </div>
+
+    <div class="stat-card available" style="cursor:pointer;" onclick="window.app.askAssistant('blank')">
+      <div>
+        <div class="stat-label">Blank (Available)</div>
+        <div class="stat-value" id="stat-available" style="color: var(--color-available);">0</div>
+        <div class="stat-sub">Open for allotment</div>
+      </div>
+      <span class="status-dot-lg" style="background:var(--color-available);"></span>
+    </div>
+
+    <div class="stat-card booked" style="cursor:pointer;" onclick="window.app.askAssistant('filled')">
+      <div>
+        <div class="stat-label">Filled (Booked)</div>
+        <div class="stat-value" id="stat-booked" style="color: var(--color-booked);">0</div>
+        <div class="stat-sub">Confirmed exhibitors</div>
+      </div>
+      <span class="status-dot-lg" style="background:var(--color-booked);"></span>
+    </div>
+
+    <div class="stat-card reserved" style="cursor:pointer;" onclick="window.app.askAssistant('reserved')">
+      <div>
+        <div class="stat-label">Reserved (Hold)</div>
+        <div class="stat-value" id="stat-reserved" style="color: var(--color-reserved);">0</div>
+        <div class="stat-sub">Partial / on hold</div>
+      </div>
+      <span class="status-dot-lg" style="background:var(--color-reserved);"></span>
+    </div>
+
+    <div class="stat-card blocked" style="cursor:pointer;" onclick="window.app.askAssistant('blocked')">
+      <div>
+        <div class="stat-label">Blocked / Utility</div>
+        <div class="stat-value" id="stat-blocked" style="color: var(--color-blocked);">0</div>
+        <div class="stat-sub">Admin / non-sale</div>
+      </div>
+      <span class="status-dot-lg" style="background:var(--color-blocked);"></span>
+    </div>
+
+    <div class="stat-card revenue">
+      <div>
+        <div class="stat-label">Revenue Collected</div>
+        <div class="stat-value" id="stat-revenue">₹0</div>
+        <div class="stat-sub" id="stat-balance">Receivable: ₹0</div>
+      </div>
+    </div>
+
+    <div class="stat-card leads" style="cursor:pointer;" onclick="window.app.switchView('leads-view')">
+      <div>
+        <div class="stat-label">Exhibitor Leads</div>
+        <div class="stat-value" id="stat-leads" style="color: #4f46e5;">0</div>
+        <div class="stat-sub" id="stat-future-leads">0 Future Pipeline</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- VIEW 1: SPATIAL FLOORPLAN OPTIMIZER, CAD VIEWPORT & STALL DIRECTORY -->
+  <!-- =================================================================== -->
+  <section class="view-section active" id="layout-view">
+
+    <!-- Status Query & Filter Bar -->
+    <div class="assistant-bar">
+      <div class="assistant-query-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="assistant-input" class="assistant-input" placeholder="Query inventory status (e.g., 'which stalls are blank?', 'filled', 'reserved', 'prime', or stall code)...">
+        <button class="btn btn-primary btn-sm" id="assistant-ask-btn">Query Status</button>
+      </div>
+      <div class="quick-ask-pills">
+        <span style="font-size:0.71rem;font-weight:600;color:var(--text-muted);margin-right:0.2rem;">Quick Filter:</span>
+        <button class="ask-pill" onclick="window.app.askAssistant('blank')">
+          <span class="dot-inline" style="background:var(--color-available);"></span> Blank Stalls
+        </button>
+        <button class="ask-pill" onclick="window.app.askAssistant('filled')">
+          <span class="dot-inline" style="background:var(--color-booked);"></span> Filled Stalls
+        </button>
+        <button class="ask-pill" onclick="window.app.askAssistant('reserved')">
+          <span class="dot-inline" style="background:var(--color-reserved);"></span> Reserved Stalls
+        </button>
+        <button class="ask-pill" onclick="window.app.askAssistant('blocked')">
+          <span class="dot-inline" style="background:var(--color-blocked);"></span> Blocked
+        </button>
+      </div>
+    </div>
+
+    <!-- Query Results Drawer -->
+    <div class="assistant-answer-drawer" id="assistant-drawer">
+      <div style="flex:1;">
+        <div id="assistant-answer-title" style="font-size:0.82rem;font-weight:700;color:var(--text-main);"></div>
+        <div id="assistant-answer-sub" style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;"></div>
+        <div class="answer-chips" id="assistant-answer-chips"></div>
+      </div>
+      <button class="btn btn-sm" onclick="document.getElementById('assistant-drawer').classList.remove('open')">Dismiss</button>
+    </div>
+
+    <div class="app-main">
+      <!-- LEFT PANEL: 2D Spatial Packing Optimizer -->
+      <aside class="generator-panel">
+        <div class="panel-section">
+          <div class="panel-heading">
+            <span>Spatial Layout Engine</span>
+            <button class="btn btn-sm" onclick="document.getElementById('spec-file-input').click()" title="Upload CSV/JSON/TXT specification">
+              Import Spec
+            </button>
+          </div>
+          <p style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.75rem;line-height:1.45;">
+            Combinatorial 2D solver maximizes stall count with zero dead white space while enforcing minimum passage &amp; concourse widths.
+          </p>
+
+          <!-- Mode Selector -->
+          <div class="mode-switch">
+            <button type="button" class="mode-btn active" id="mode-sqft-btn" onclick="window.app.setGeneratorMode('sqft')">
+              1. By Area (Sq.Ft.)
+            </button>
+            <button type="button" class="mode-btn" id="mode-dims-btn" onclick="window.app.setGeneratorMode('dims')">
+              2. By Length × Breadth
+            </button>
+          </div>
+
+          <form id="layout-generator-form">
+            <div class="form-group">
+              <label>Hall / Venue Name</label>
+              <input type="text" id="gen-hall-name" class="form-control" value="Main Exhibition Hall" required>
+            </div>
+
+            <!-- MODE 1: Total Sq Ft Inputs -->
+            <div id="mode-sqft-inputs">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Hall Area (Sq Ft)</label>
+                  <input type="number" id="gen-total-sqft" class="form-control" value="3000" min="200" step="50">
+                </div>
+                <div class="form-group">
+                  <label>Stall Size (Sq Ft)</label>
+                  <input type="number" id="gen-stall-sqft" class="form-control" value="64" min="16" step="4">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Hall Aspect Ratio</label>
+                <select id="gen-aspect-ratio" class="form-control">
+                  <option value="1.5" selected>Standard Rectangular (1.5 : 1)</option>
+                  <option value="1.25">Compact Proportion (1.25 : 1)</option>
+                  <option value="1.0">Square Proportion (1 : 1)</option>
+                  <option value="2.0">Elongated Gallery (2 : 1)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- MODE 2: Length x Breadth Inputs -->
+            <div id="mode-dims-inputs" style="display:none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Hall Length (ft)</label>
+                  <input type="number" id="gen-hall-length" class="form-control" value="67" min="20" step="1">
+                </div>
+                <div class="form-group">
+                  <label>Hall Breadth (ft)</label>
+                  <input type="number" id="gen-hall-breadth" class="form-control" value="45" min="20" step="1">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Stall Width (ft)</label>
+                  <input type="number" id="gen-stall-w" class="form-control" value="8" min="4" step="0.5">
+                </div>
+                <div class="form-group">
+                  <label>Stall Depth (ft)</label>
+                  <input type="number" id="gen-stall-d" class="form-control" value="8" min="4" step="0.5">
+                </div>
+              </div>
+            </div>
+
+            <!-- Passage & Freeway Settings -->
+            <div class="form-row">
+              <div class="form-group">
+                <label>Min Walking Aisle (ft)</label>
+                <input type="number" id="gen-passage-ft" class="form-control" value="6" min="3" max="25" step="0.5">
+              </div>
+              <div class="form-group">
+                <label>Main Freeway (ft)</label>
+                <input type="number" id="gen-freeway-ft" class="form-control" value="8" min="4" max="30" step="0.5">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Optimization Topology</label>
+                <select id="gen-strategy" class="form-control">
+                  <option value="auto" selected>Auto-Solver (Maximum Stalls)</option>
+                  <option value="perimeter_islands">4-Wall Perimeter + Central Islands</option>
+                  <option value="horizontal_bays">Horizontal Back-to-Back Bays</option>
+                  <option value="vertical_bays">Vertical Back-to-Back Bays</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Base Stall Tariff (₹)</label>
+                <input type="number" id="gen-default-price" class="form-control" value="18000" min="0" step="500">
+              </div>
+            </div>
+
+            <div class="form-group" style="display:flex;align-items:center;gap:0.45rem;margin-top:0.15rem;">
+              <input type="checkbox" id="gen-corner-premium" checked style="accent-color:var(--primary);width:14px;height:14px;">
+              <label for="gen-corner-premium" style="margin:0;cursor:pointer;font-size:0.72rem;">
+                Apply +15% tariff on Corner &amp; Concourse frontage
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem;padding:0.55rem;">
+              Compute Optimal Floorplan
+            </button>
+          </form>
+
+          <!-- Space Utilization Breakdown -->
+          <div class="optimization-summary" id="opt-summary-box">
+            <div style="font-weight:700;color:var(--text-main);margin-bottom:0.35rem;text-transform:uppercase;font-size:0.68rem;letter-spacing:0.04em;">
+              Spatial Efficiency Analysis
+            </div>
+            <div class="opt-row"><span>Winning Topology:</span><strong id="opt-topology">—</strong></div>
+            <div class="opt-row"><span>Hall Dimensions:</span><strong id="opt-dims">—</strong></div>
+            <div class="opt-row"><span>Gross Hall Area:</span><strong id="opt-total-area">—</strong></div>
+            <div class="opt-row"><span>Unit Stall Footprint:</span><strong id="opt-stall-size">—</strong></div>
+            <div class="opt-row"><span>Total Stalls Packed:</span><strong id="opt-stall-count" style="color:var(--color-available);">0 Stalls</strong></div>
+            <div class="opt-row"><span>Net Sellable Area:</span><strong id="opt-stall-area">0 sq ft (0%)</strong></div>
+            <div class="opt-row"><span>Circulation &amp; Freeways:</span><strong id="opt-passage-area">0 sq ft (0%)</strong></div>
+            <div class="opt-row"><span>Unutilized Dead Space:</span><strong style="color:var(--color-available);">0 sq ft (0%)</strong></div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER PANEL: CAD Floorplan Viewport -->
+      <section class="canvas-panel">
+        <div class="canvas-toolbar">
+          <div class="toolbar-title">
+            <span>Architectural Floorplan View</span>
+            <span id="toolbar-hall-badge" style="font-size:0.72rem;color:var(--text-muted);font-weight:500;">— Select any stall unit to assign exhibitor or issue receipt</span>
+          </div>
+          <div class="toolbar-controls">
+            <button class="btn btn-sm" id="add-custom-stall-btn" title="Place custom stall unit on floorplan">+ Add Custom Unit</button>
+            <button class="btn btn-sm" id="zoom-out-btn">−</button>
+            <button class="btn btn-sm" id="zoom-reset-btn">100%</button>
+            <button class="btn btn-sm" id="zoom-in-btn">+</button>
+          </div>
+        </div>
+
+        <div class="canvas-viewport" id="canvas-viewport">
+          <!-- Empty State -->
+          <div class="empty-layout-state" id="empty-layout-state">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5" style="margin:0 auto;"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            <h2>No Floorplan Active</h2>
+            <p>
+              Enter your hall's <strong>Total Sq.Ft.</strong> or <strong>Length × Breadth</strong> in the Spatial Layout Engine on the left to compute a high-density exhibition layout with walking aisles and main concourse.
+            </p>
+            <div style="display:flex;gap:0.5rem;justify-content:center;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="document.getElementById('layout-generator-form').requestSubmit()">
+                Compute Optimal Floorplan
+              </button>
+              <button class="btn" onclick="document.getElementById('spec-file-input').click()">
+                Import Specification File
+              </button>
+            </div>
+          </div>
+
+          <!-- Dynamic Floorplan Container -->
+          <div class="canvas-world" id="canvas-world" style="display:none;">
+            <svg id="floorplan-svg" xmlns="http://www.w3.org/2000/svg" style="display:block;"></svg>
+            <div id="markers-layer"></div>
+          </div>
+        </div>
+
+        <!-- Legend Bar -->
+        <div class="canvas-legend">
+          <div class="legend-items">
+            <div class="legend-item">
+              <span class="legend-dot available"></span>
+              <span>Blank / Available (<strong id="leg-available">0</strong>)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot booked"></span>
+              <span>Filled / Booked (<strong id="leg-booked">0</strong>)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot reserved"></span>
+              <span>Reserved / Hold (<strong id="leg-reserved">0</strong>)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot blocked"></span>
+              <span>Blocked / Utility (<strong id="leg-blocked">0</strong>)</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot passage"></span>
+              <span>Walking Passage</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot freeway"></span>
+              <span>Main Concourse / Freeway</span>
+            </div>
+          </div>
+          <div style="font-size:0.72rem;color:var(--text-muted);font-weight:500;">
+            Zero-dead-space packing active • Click any unit to manage allotment
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT PANEL: Stall Inventory Directory -->
+      <aside class="sidebar-panel">
+        <div class="sidebar-header">
+          <div class="sidebar-title">
+            <span>Stall Inventory</span>
+            <span id="dir-count-label" style="font-size:0.72rem;color:var(--text-muted);text-transform:none;">0 Units</span>
+          </div>
+          <div class="search-box">
+            <input type="text" id="stall-search" placeholder="Filter by code (A1), brand, or phone...">
+          </div>
+        </div>
+
+        <div class="sidebar-tabs">
+          <button class="tab-btn active" data-filter="all">All</button>
+          <button class="tab-btn" data-filter="available">Blank</button>
+          <button class="tab-btn" data-filter="booked">Filled</button>
+          <button class="tab-btn" data-filter="reserved">Reserved</button>
+          <button class="tab-btn" data-filter="blocked">Blocked</button>
+        </div>
+
+        <div class="stall-list" id="stall-list"></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- VIEW 2: LAST MILE EXHIBITOR ONBOARDING & STALL LEADS CRM            -->
+  <!-- =================================================================== -->
+  <section class="view-section" id="leads-view">
+    <div class="leads-workspace">
+
+      <!-- Left: Last Mile Onboarding & Lead Capture Form -->
+      <div class="card-surface">
+        <div style="margin-bottom:0.85rem;border-bottom:1px solid var(--border-color);padding-bottom:0.65rem;">
+          <h2 style="font-size:0.96rem;font-weight:700;">Last Mile Exhibitor &amp; Lead Registration</h2>
+          <p style="font-size:0.74rem;color:var(--text-muted);margin-top:2px;">
+            Log prospective leads for future exhibitions or onboard confirmed exhibitors with sequential Last Mile Membership IDs.
+          </p>
+        </div>
+
+        <form id="lead-onboarding-form">
+          <div class="form-group" style="background:var(--bg-subtle);border:1px solid var(--border-strong);padding:0.55rem 0.65rem;border-radius:6px;">
+            <label style="color:var(--text-main);">Participation Stage *</label>
+            <select id="lead-status" class="form-control" required>
+              <option value="Future Lead (Not Participating Now)" selected>Future Pipeline — Store Lead Only (Not Participating Now)</option>
+              <option value="Interested / Follow-up">Active Inquiry — Interested / Evaluating Stall</option>
+              <option value="Participating Now">Confirmed Exhibitor — Participating Now</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Contact Full Name *</label>
+              <input type="text" id="lead-name" class="form-control" placeholder="e.g. Rahul Sharma" required>
+            </div>
+            <div class="form-group">
+              <label>WhatsApp Phone *</label>
+              <input type="tel" id="lead-phone" class="form-control" placeholder="e.g. 9876543210" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Brand / Company Name *</label>
+              <input type="text" id="lead-brand" class="form-control" placeholder="e.g. Elegance Creations" required>
+            </div>
+            <div class="form-group">
+              <label>Business Category *</label>
+              <select id="lead-category" class="form-control" required>
+                <option value="Handicrafts & Arts">Handicrafts &amp; Artworks</option>
+                <option value="Apparel & Textiles">Apparel &amp; Textiles</option>
+                <option value="Jewelry & Accessories">Jewelry &amp; Fashion Accessories</option>
+                <option value="Home Decor & Furnishing">Home Decor &amp; Furnishing</option>
+                <option value="Organic & Food Products">Organic Food &amp; Gourmet</option>
+                <option value="Leather Goods">Leather Goods &amp; Footwear</option>
+                <option value="Cosmetics & Personal Care">Cosmetics &amp; Herbal Wellness</option>
+                <option value="Patochitro">Patochitro</option>
+                <option value="Other">Other Services / Retail</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Primary City *</label>
+              <input type="text" id="lead-city" class="form-control" placeholder="e.g. Kolkata" value="Kolkata" required>
+            </div>
+            <div class="form-group">
+              <label>Age &amp; Gender</label>
+              <div style="display:grid;grid-template-columns:70px 1fr;gap:0.4rem;">
+                <input type="number" id="lead-age" class="form-control" placeholder="Age" value="32" min="18" max="99">
+                <select id="lead-gender" class="form-control">
+                  <option value="Female">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Registered Address</label>
+            <input type="text" id="lead-address" class="form-control" placeholder="Street address...">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Product / Social Link</label>
+              <input type="text" id="lead-link" class="form-control" placeholder="https://instagram.com/...">
+            </div>
+            <div class="form-group">
+              <label>Preferred Stall Size / Budget</label>
+              <input type="text" id="lead-pref-stall" class="form-control" placeholder="e.g. 8x8 ft / ₹18,000">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Outstation Exhibition Preferences (Last Mile Guild)</label>
+            <div class="cities-grid">
+              <label class="city-pill"><input type="checkbox" name="leadCities" value="Mumbai" checked> Mumbai</label>
+              <label class="city-pill"><input type="checkbox" name="leadCities" value="Bangalore" checked> Bangalore</label>
+              <label class="city-pill"><input type="checkbox" name="leadCities" value="Hyderabad" checked> Hyderabad</label>
+              <label class="city-pill"><input type="checkbox" name="leadCities" value="Delhi" checked> Delhi NCR</label>
+              <label class="city-pill"><input type="checkbox" name="leadCities" value="Pune" checked> Pune</label>
+              <label class="city-pill"><input type="checkbox" name="leadCities" value="Kolkata Only"> Kolkata Only</label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Follow-up Date</label>
+              <input type="date" id="lead-followup" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Remarks / Notes</label>
+              <input type="text" id="lead-notes" class="form-control" placeholder="e.g. Interested in Winter edition">
+            </div>
+          </div>
+
+          <div style="display:flex;gap:0.5rem;margin-top:0.4rem;">
+            <button type="submit" class="btn btn-primary" style="flex:1;padding:0.55rem;">
+              Save Lead &amp; Generate Member ID
+            </button>
+            <button type="button" class="btn btn-success" id="save-and-book-lead-btn">
+              Save &amp; Assign Stall
+            </button>
+          </div>
+        </form>
+
+        <!-- Membership Credential Preview -->
+        <div class="membership-ticket" id="last-mile-ticket-preview" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:0.65rem;letter-spacing:0.1em;color:#94a3b8;font-weight:700;">LAST MILE CREDENTIAL</div>
+              <div id="ticket-member-id" style="font-size:1.05rem;font-weight:800;margin-top:2px;">MEM-2026-1001</div>
+            </div>
+            <span style="background:rgba(13,148,136,0.25);border:1px solid #14b8a6;color:#99f6e4;padding:2px 8px;border-radius:4px;font-size:0.64rem;font-weight:700;">ACTIVE</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:0.75rem;font-size:0.76rem;">
+            <div>
+              <div style="color:#94a3b8;font-size:0.64rem;">EXHIBITOR / BRAND</div>
+              <div id="ticket-holder-name" style="font-weight:700;">—</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="color:#94a3b8;font-size:0.64rem;">STAGE</div>
+              <div id="ticket-status-text" style="font-weight:600;">Future Lead</div>
+            </div>
+          </div>
+          <div style="margin-top:0.7rem;padding-top:0.55rem;border-top:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center;">
+            <a id="ticket-wa-link" href="#" target="_blank" class="btn btn-sm btn-success">
+              Dispatch WhatsApp Credential
+            </a>
+            <span style="font-size:0.66rem;color:#94a3b8;" id="ticket-sync-msg">Synced to Cloud Registry</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Stored Leads Directory CRM Table -->
+      <div class="card-surface" style="display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;border-bottom:1px solid var(--border-color);padding-bottom:0.65rem;">
+          <div>
+            <h2 style="font-size:0.96rem;font-weight:700;">Exhibitor Leads &amp; Future Pipeline Directory</h2>
+            <p style="font-size:0.74rem;color:var(--text-muted);margin-top:2px;">
+              All prospective and onboarded exhibitors. Click <strong>Assign Stall</strong> to convert any lead into a stall booking.
+            </p>
+          </div>
+          <div style="display:flex;gap:0.45rem;align-items:center;">
+            <select id="lead-filter-select" class="form-control" style="width:auto;">
+              <option value="all">All Stages</option>
+              <option value="Future Lead (Not Participating Now)">Future Pipeline Only</option>
+              <option value="Interested / Follow-up">Active Inquiries</option>
+              <option value="Participating Now">Participating / Booked</option>
+            </select>
+            <input type="text" id="lead-search-input" class="form-control" placeholder="Search name, brand, phone..." style="width:180px;">
+            <button class="btn btn-sm" onclick="window.app.exportLeadsCSV()">Export CSV</button>
+          </div>
+        </div>
+
+        <div class="data-table-wrapper" style="flex:1;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Member ID</th>
+                <th>Brand &amp; Contact</th>
+                <th>Phone / City</th>
+                <th>Category &amp; Cities</th>
+                <th>Stage &amp; Notes</th>
+                <th>Allotment</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="leads-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- VIEW 3: PAYMENTS & RECEIPTS LEDGER                                  -->
+  <!-- =================================================================== -->
+  <section class="view-section" id="payments-view">
+    <div style="padding:1.2rem 1.5rem;flex:1;">
+      <div class="card-surface">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;border-bottom:1px solid var(--border-color);padding-bottom:0.75rem;">
+          <div>
+            <h2 style="font-size:0.98rem;font-weight:700;">Stall Allotment Payments &amp; Official Receipts Ledger</h2>
+            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">
+              Complete financial ledger of stall bookings, advance collections, receivables, and official receipts.
+            </p>
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="text" id="payment-search-input" class="form-control" placeholder="Search receipt #, stall, brand..." style="width:220px;">
+            <button class="btn btn-sm" onclick="window.app.exportPaymentsCSV()">Export Ledger CSV</button>
+          </div>
+        </div>
+
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Receipt No.</th>
+                <th>Date</th>
+                <th>Stall</th>
+                <th>Exhibitor / Brand</th>
+                <th>Phone</th>
+                <th>Net Tariff</th>
+                <th>Amount Paid</th>
+                <th>Balance Due</th>
+                <th>Mode &amp; Reference</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="payments-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================================================================== -->
+  <!-- MODAL 1: STALL BOOKING + INTERACTIVE POPUP FLOORPLAN SELECTOR       -->
+  <!-- =================================================================== -->
+  <div class="modal-overlay" id="booking-modal">
+    <div class="modal-box modal-xl">
+      <div class="modal-header">
+        <div>
+          <h3 id="modal-booking-title">Stall Allotment, Payment &amp; Interactive Floorplan Selector</h3>
+          <p style="font-size:0.72rem;color:var(--text-muted);">
+            Select any stall directly on the interactive floorplan on the right to switch units while booking.
+          </p>
+        </div>
+        <button class="close-btn" id="close-booking-modal-btn">&times;</button>
+      </div>
+
+      <form id="booking-form">
+        <div class="modal-body modal-split-booking">
+
+          <!-- Left Column: Booking & Payment Form -->
+          <div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Selected Stall Unit *</label>
+                <select id="book-stall-select" class="form-control" required></select>
+              </div>
+              <div class="form-group">
+                <label>Allotment Status *</label>
+                <select id="book-status-select" class="form-control" required>
+                  <option value="booked">Filled / Booked (Confirmed)</option>
+                  <option value="reserved">Reserved / Hold (Advance Paid)</option>
+                  <option value="available">Blank / Available (Open)</option>
+                  <option value="blocked">Blocked / Utility / Office</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Auto-fill from Stored Leads -->
+            <div class="form-group" style="background:var(--bg-subtle);padding:0.4rem 0.6rem;border-radius:6px;border:1px solid var(--border-color);">
+              <label style="color:var(--primary);">Auto-Populate From Stored Last Mile Lead (Optional)</label>
+              <select id="book-lead-autofill" class="form-control">
+                <option value="">— Select stored lead or enter details manually —</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Brand / Company Name *</label>
+                <input type="text" id="book-vendor" class="form-control" placeholder="e.g. Sui Dhaga / Ninad" required>
+              </div>
+              <div class="form-group">
+                <label>Contact Person</label>
+                <input type="text" id="book-contact" class="form-control" placeholder="e.g. Anita Roy">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>WhatsApp Phone *</label>
+                <input type="tel" id="book-phone" class="form-control" placeholder="e.g. 9876543210">
+              </div>
+              <div class="form-group">
+                <label>Category / Membership ID</label>
+                <input type="text" id="book-category" class="form-control" placeholder="e.g. Apparel / MEM-2026-1001">
+              </div>
+            </div>
+
+            <!-- Payment Details Box -->
+            <div style="background:var(--bg-subtle);border:1px solid var(--border-strong);border-radius:6px;padding:0.55rem 0.65rem;margin-bottom:0.45rem;">
+              <div style="font-size:0.71rem;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:var(--text-secondary);margin-bottom:0.35rem;">
+                Financial &amp; Payment Record
+              </div>
+              <div class="form-row-3">
+                <div class="form-group">
+                  <label>Stall Tariff (₹)</label>
+                  <input type="number" id="book-price" class="form-control" value="18000" min="0" step="100">
+                </div>
+                <div class="form-group">
+                  <label>Discount (₹)</label>
+                  <input type="number" id="book-discount" class="form-control" value="0" min="0" step="100">
+                </div>
+                <div class="form-group">
+                  <label>Amount Paid (₹) *</label>
+                  <input type="number" id="book-paid" class="form-control" value="18000" min="0" step="100">
+                </div>
+              </div>
+
+              <div class="form-row-3">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label>Payment Mode</label>
+                  <select id="book-pay-mode" class="form-control">
+                    <option value="UPI / GPay / PhonePe">UPI / GPay</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Bank Transfer (NEFT/IMPS)">Bank (NEFT)</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Card">Card</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label>Ref / UTR No.</label>
+                  <input type="text" id="book-pay-ref" class="form-control" placeholder="Transaction ID">
+                </div>
+                <div class="form-group" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:center;background:#fff;padding:0.25rem 0.55rem;border-radius:4px;border:1px solid var(--border-strong);">
+                  <span style="font-size:0.6rem;font-weight:700;color:var(--text-muted);">BALANCE DUE</span>
+                  <span id="book-balance-display" style="font-size:0.9rem;font-weight:800;color:var(--color-blocked);">₹0</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Special Instructions / Notes</label>
+              <input type="text" id="book-notes" class="form-control" placeholder="Extra tables, fascia name, power load...">
+            </div>
+          </div>
+
+          <!-- Right Column: Pop-Up Interactive Hall Layout -->
+          <div class="popup-map-box">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+              <span style="font-size:0.76rem;font-weight:700;">Interactive Floorplan Selector</span>
+              <span id="popup-selected-indicator" style="font-size:0.73rem;font-weight:700;color:var(--primary);"></span>
+            </div>
+
+            <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.45rem;font-size:0.68rem;font-weight:600;">
+              <span style="background:#ccfbf1;color:#115e59;padding:2px 7px;border-radius:3px;">Blank: <strong id="pop-cnt-blank">0</strong></span>
+              <span style="background:#dbeafe;color:#1e40af;padding:2px 7px;border-radius:3px;">Filled: <strong id="pop-cnt-filled">0</strong></span>
+              <span style="background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:3px;">Reserved: <strong id="pop-cnt-reserved">0</strong></span>
+              <span style="background:#ffe4e6;color:#9f1239;padding:2px 7px;border-radius:3px;">Blocked: <strong id="pop-cnt-blocked">0</strong></span>
+            </div>
+
+            <div class="popup-map-viewport" id="popup-map-viewport">
+              <div id="popup-map-world" style="position:relative;transform-origin:center center;"></div>
+            </div>
+
+            <div style="margin-top:0.4rem;font-size:0.68rem;color:var(--text-muted);display:flex;justify-content:space-between;">
+              <span>Teal = Blank (Click to select)</span>
+              <span>Blue = Filled</span>
+              <span>Amber = Reserved</span>
+              <span>Red = Blocked</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <button type="button" class="btn" onclick="window.app.closeBookingModal()">Cancel</button>
+            <button type="button" class="btn btn-danger" id="btn-delete-booking" style="display:none;" onclick="window.app.deleteStallBooking(document.getElementById('book-stall-select').value)">
+              Delete Stall Booking
+            </button>
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button type="button" class="btn btn-warning" id="btn-save-and-receipt">
+              Save &amp; Issue Receipt
+            </button>
+            <button type="submit" class="btn btn-primary">
+              Save Stall Booking
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =================================================================== -->
+  <!-- MODAL 2: OFFICIAL PRINTABLE & WHATSAPP RECEIPT                      -->
+  <!-- =================================================================== -->
+  <div class="modal-overlay" id="receipt-modal">
+    <div class="modal-box" style="max-width: 680px;">
+      <div class="modal-header no-print">
+        <h3>Official Stall Allotment &amp; Payment Receipt</h3>
+        <button class="close-btn" onclick="document.getElementById('receipt-modal').classList.remove('active')">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="receipt-paper" id="printable-receipt">
+          <div class="receipt-header">
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <img src="logo.png" alt="Logo" style="width:44px;height:44px;object-fit:contain;" onerror="this.style.display='none'">
+              <div>
+                <h2 style="font-size:1.12rem;font-weight:800;letter-spacing:-0.02em;">ALLIED &amp; LAST MILE EXHIBITIONS</h2>
+                <p style="font-size:0.73rem;color:#475569;">Official Stall Allotment &amp; Payment Receipt</p>
+              </div>
+            </div>
+            <div style="text-align:right;font-size:0.76rem;">
+              <div><strong>Receipt No:</strong> <span id="rcp-no">RCP-2026-1001</span></div>
+              <div><strong>Date:</strong> <span id="rcp-date">—</span></div>
+              <div><strong>Status:</strong> <span id="rcp-status" style="font-weight:800;text-transform:uppercase;">BOOKED</span></div>
+            </div>
+          </div>
+
+          <div class="receipt-grid">
+            <div>
+              <div style="font-size:0.68rem;color:#64748b;font-weight:700;text-transform:uppercase;">Exhibitor / Brand Details</div>
+              <div style="font-weight:800;font-size:0.92rem;margin-top:2px;" id="rcp-vendor">—</div>
+              <div id="rcp-contact">—</div>
+              <div id="rcp-phone">—</div>
+              <div id="rcp-category" style="color:#475569;">—</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:0.68rem;color:#64748b;font-weight:700;text-transform:uppercase;">Stall &amp; Hall Allotment</div>
+              <div style="font-weight:800;font-size:1rem;color:#1d4ed8;margin-top:2px;" id="rcp-stall-code">Stall —</div>
+              <div id="rcp-stall-dims">Dimensions: —</div>
+              <div id="rcp-hall-name">Hall: —</div>
+            </div>
+          </div>
+
+          <table class="receipt-table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th style="text-align:right;">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Stall Tariff (<span id="rcp-table-stall">—</span>)</td>
+                <td style="text-align:right;font-weight:700;" id="rcp-price">₹0</td>
+              </tr>
+              <tr>
+                <td>Discount Applied</td>
+                <td style="text-align:right;color:#0f766e;" id="rcp-discount">- ₹0</td>
+              </tr>
+              <tr>
+                <td><strong>Net Payable Amount</strong></td>
+                <td style="text-align:right;font-weight:800;" id="rcp-net">₹0</td>
+              </tr>
+              <tr style="background:#f0fdfa;">
+                <td><strong>Amount Received</strong> (<span id="rcp-pay-mode">UPI</span> — <span id="rcp-pay-ref">Ref</span>)</td>
+                <td style="text-align:right;font-weight:800;color:#0f766e;font-size:0.92rem;" id="rcp-paid">₹0</td>
+              </tr>
+              <tr style="background:#fff1f2;">
+                <td><strong>Balance Due</strong></td>
+                <td style="text-align:right;font-weight:800;color:#be123c;" id="rcp-balance">₹0</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:1.4rem;padding-top:0.9rem;border-top:1px dashed #cbd5e1;font-size:0.74rem;">
+            <div>
+              <div><strong>Remarks:</strong> <span id="rcp-notes">None</span></div>
+              <div style="color:#64748b;margin-top:4px;">Thank you for exhibiting with Allied &amp; Last Mile.</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="border-top:1px solid #0f172a;padding-top:4px;width:150px;font-weight:700;">Authorized Signatory</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer no-print">
+        <button type="button" class="btn" onclick="document.getElementById('receipt-modal').classList.remove('active')">Close</button>
+        <div style="display:flex;gap:0.5rem;">
+          <a id="rcp-whatsapp-btn" href="#" target="_blank" class="btn btn-success">
+            Send WhatsApp Receipt
+          </a>
+          <button type="button" class="btn btn-primary" onclick="window.print()">
+            Print / Save PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Controller & Operations-Research Spatial Packing Engine -->
+  <script>
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw6uNgxYp0thwMxhThSkbxXh63zJHWW27zavBMN6hFkEcxdCal4xMlZRTmSwxwszGoQ/exec";
+    const ADMIN_WHATSAPP_NUMBER = "918040122660";
+
+    const STORAGE_KEYS = {
+      LAYOUT: 'allied_lastmile_layout_v2',
+      STALLS: 'allied_lastmile_stalls_v2',
+      LEADS: 'allied_lastmile_leads_v1',
+      PAYMENTS: 'allied_lastmile_payments_v1'
+    };
+
+    class SmartStallPortalApp {
+      constructor() {
+        this.generatorMode = 'sqft';
+        this.layoutMeta = this.loadJSON(STORAGE_KEYS.LAYOUT, null);
+        this.stalls = this.loadJSON(STORAGE_KEYS.STALLS, []);
+        this.leads = this.loadJSON(STORAGE_KEYS.LEADS, this.getDefaultSampleLeads());
+        this.payments = this.loadJSON(STORAGE_KEYS.PAYMENTS, []);
+
+        this.currentFilter = 'all';
+        this.searchQuery = '';
+        this.scale = 1;
+        this.isAddCustomMode = false;
+        this.highlightedStallIds = new Set();
+
+        this.initDOM();
+        this.bindEvents();
+        this.renderAll();
+      }
+
+      loadJSON(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch (e) {
+          return fallback;
+        }
+      }
+
+      saveAll() {
+        localStorage.setItem(STORAGE_KEYS.LAYOUT, JSON.stringify(this.layoutMeta));
+        localStorage.setItem(STORAGE_KEYS.STALLS, JSON.stringify(this.stalls));
+        localStorage.setItem(STORAGE_KEYS.LEADS, JSON.stringify(this.leads));
+        localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify(this.payments));
+        this.renderAll();
+      }
+
+      getDefaultSampleLeads() {
+        return [
+          {
+            id: 'LEAD-101',
+            memberId: 'MEM-2026-1001',
+            fullName: 'Soma Chatterjee',
+            brandName: 'Taant & Loom Heritage',
+            phone: '9830112233',
+            age: '36',
+            gender: 'Female',
+            city: 'Kolkata',
+            address: 'Gariahat Road, Kolkata',
+            category: 'Apparel & Textiles',
+            link: 'https://instagram.com/taantloom',
+            prefStall: '8x8 ft / ₹18,000',
+            targetCities: 'Mumbai, Bangalore, Delhi',
+            leadStatus: 'Future Lead (Not Participating Now)',
+            followupDate: '2026-12-01',
+            notes: 'Out of station this month; confirmed interest for next exhibition',
+            assignedStall: '',
+            createdAt: new Date().toLocaleDateString('en-IN')
+          }
+        ];
+      }
+
+      initDOM() {
+        this.navBtns = document.querySelectorAll('.nav-tab-btn');
+        this.views = document.querySelectorAll('.view-section');
+
+        this.genForm = document.getElementById('layout-generator-form');
+        this.genHallName = document.getElementById('gen-hall-name');
+        this.genTotalSqft = document.getElementById('gen-total-sqft');
+        this.genStallSqft = document.getElementById('gen-stall-sqft');
+        this.genAspectRatio = document.getElementById('gen-aspect-ratio');
+        this.genHallLength = document.getElementById('gen-hall-length');
+        this.genHallBreadth = document.getElementById('gen-hall-breadth');
+        this.genStallW = document.getElementById('gen-stall-w');
+        this.genStallD = document.getElementById('gen-stall-d');
+        this.genPassageFt = document.getElementById('gen-passage-ft');
+        this.genFreewayFt = document.getElementById('gen-freeway-ft');
+        this.genStrategy = document.getElementById('gen-strategy');
+        this.genDefaultPrice = document.getElementById('gen-default-price');
+        this.genCornerPremium = document.getElementById('gen-corner-premium');
+
+        this.emptyLayoutState = document.getElementById('empty-layout-state');
+        this.canvasViewport = document.getElementById('canvas-viewport');
+        this.canvasWorld = document.getElementById('canvas-world');
+        this.floorplanSvg = document.getElementById('floorplan-svg');
+        this.markersLayer = document.getElementById('markers-layer');
+
+        this.bookingModal = document.getElementById('booking-modal');
+        this.bookingForm = document.getElementById('booking-form');
+        this.bookStallSelect = document.getElementById('book-stall-select');
+        this.bookStatusSelect = document.getElementById('book-status-select');
+        this.bookLeadAutofill = document.getElementById('book-lead-autofill');
+        this.bookVendor = document.getElementById('book-vendor');
+        this.bookContact = document.getElementById('book-contact');
+        this.bookPhone = document.getElementById('book-phone');
+        this.bookCategory = document.getElementById('book-category');
+        this.bookPrice = document.getElementById('book-price');
+        this.bookDiscount = document.getElementById('book-discount');
+        this.bookPaid = document.getElementById('book-paid');
+        this.bookPayMode = document.getElementById('book-pay-mode');
+        this.bookPayRef = document.getElementById('book-pay-ref');
+        this.bookBalanceDisplay = document.getElementById('book-balance-display');
+        this.bookNotes = document.getElementById('book-notes');
+        this.popupMapWorld = document.getElementById('popup-map-world');
+      }
+
+      bindEvents() {
+        this.navBtns.forEach(btn => {
+          btn.addEventListener('click', () => this.switchView(btn.dataset.view));
+        });
+
+        this.genForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.generateOptimizedLayout();
+        });
+
+        document.getElementById('spec-file-input').addEventListener('change', (e) => this.handleSpecUpload(e));
+
+        document.getElementById('clear-layout-btn').addEventListener('click', () => {
+          if (confirm('Clear the active floorplan layout? (Saved Leads and Receipts remain intact)')) {
+            this.layoutMeta = null;
+            this.stalls = [];
+            this.saveAll();
+            this.showToast('Floorplan reset.');
+          }
+        });
+
+        document.getElementById('quick-book-btn').addEventListener('click', () => {
+          if (this.stalls.length === 0) {
+            this.showToast('Compute a floorplan first to begin booking stalls.');
+            return;
+          }
+          const firstBlank = this.stalls.find(s => s.status === 'available') || this.stalls[0];
+          this.openBookingModal(firstBlank.id);
+        });
+
+        document.getElementById('export-all-csv-btn').addEventListener('click', () => this.exportStallsCSV());
+
+        document.getElementById('zoom-in-btn').addEventListener('click', () => {
+          this.scale = Math.min(2.2, this.scale + 0.15);
+          this.applyZoom();
+        });
+        document.getElementById('zoom-out-btn').addEventListener('click', () => {
+          this.scale = Math.max(0.4, this.scale - 0.15);
+          this.applyZoom();
+        });
+        document.getElementById('zoom-reset-btn').addEventListener('click', () => {
+          this.scale = 1;
+          this.applyZoom();
+        });
+
+        const addBtn = document.getElementById('add-custom-stall-btn');
+        addBtn.addEventListener('click', () => {
+          if (!this.layoutMeta) {
+            this.showToast('Compute a floorplan first before adding custom stall units.');
+            return;
+          }
+          this.isAddCustomMode = !this.isAddCustomMode;
+          addBtn.classList.toggle('btn-primary', this.isAddCustomMode);
+          this.canvasWorld.style.cursor = this.isAddCustomMode ? 'crosshair' : 'default';
+          this.showToast(this.isAddCustomMode ? 'Click on floorplan to place custom stall unit' : 'Custom unit placement disabled');
+        });
+
+        this.canvasWorld.addEventListener('click', (e) => {
+          if (!this.isAddCustomMode || !this.layoutMeta) return;
+          const rect = this.floorplanSvg.getBoundingClientRect();
+          const xPx = (e.clientX - rect.left) / this.scale;
+          const yPx = (e.clientY - rect.top) / this.scale;
+          const code = prompt('Enter Stall Code (e.g. X1, SP1):', `S${this.stalls.length + 1}`);
+          if (!code) return;
+          const stallWpx = this.layoutMeta.stallW * this.layoutMeta.pxPerFt;
+          const stallDpx = this.layoutMeta.stallD * this.layoutMeta.pxPerFt;
+          this.stalls.push({
+            id: `STALL_${Date.now()}`,
+            code: code.trim().toUpperCase(),
+            section: 'CUSTOM',
+            xPx: Math.round(xPx - stallWpx / 2),
+            yPx: Math.round(yPx - stallDpx / 2),
+            wPx: Math.round(stallWpx),
+            hPx: Math.round(stallDpx),
+            widthFt: this.layoutMeta.stallW,
+            depthFt: this.layoutMeta.stallD,
+            areaSqFt: Math.round(this.layoutMeta.stallW * this.layoutMeta.stallD),
+            status: 'available',
+            price: parseFloat(this.genDefaultPrice.value) || 18000,
+            discount: 0,
+            paid: 0,
+            vendor: '',
+            contact: '',
+            phone: '',
+            category: '',
+            payMode: 'UPI / GPay / PhonePe',
+            payRef: '',
+            notes: 'Custom Unit'
+          });
+          this.isAddCustomMode = false;
+          addBtn.classList.remove('btn-primary');
+          this.canvasWorld.style.cursor = 'default';
+          this.saveAll();
+          this.showToast(`Custom Stall ${code.toUpperCase()} placed.`);
+        });
+
+        document.getElementById('assistant-ask-btn').addEventListener('click', () => {
+          const q = document.getElementById('assistant-input').value.trim();
+          this.askAssistant(q || 'blank');
+        });
+        document.getElementById('assistant-input').addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.askAssistant(e.target.value.trim() || 'blank');
+          }
+        });
+
+        document.getElementById('stall-search').addEventListener('input', (e) => {
+          this.searchQuery = e.target.value.toLowerCase().trim();
+          this.renderDirectory();
+        });
+
+        document.querySelectorAll('.sidebar-tabs .tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.sidebar-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.currentFilter = btn.dataset.filter;
+            this.renderDirectory();
+          });
+        });
+
+        document.getElementById('close-booking-modal-btn').addEventListener('click', () => this.closeBookingModal());
+        this.bookStallSelect.addEventListener('change', (e) => this.populateBookingModalForStall(e.target.value));
+
+        const updateBalance = () => {
+          const price = parseFloat(this.bookPrice.value) || 0;
+          const discount = parseFloat(this.bookDiscount.value) || 0;
+          const paid = parseFloat(this.bookPaid.value) || 0;
+          const net = Math.max(0, price - discount);
+          const bal = Math.max(0, net - paid);
+          this.bookBalanceDisplay.textContent = `₹${bal.toLocaleString('en-IN')}`;
+          this.bookBalanceDisplay.style.color = bal > 0 ? '#be123c' : '#0f766e';
+        };
+        this.bookPrice.addEventListener('input', updateBalance);
+        this.bookDiscount.addEventListener('input', updateBalance);
+        this.bookPaid.addEventListener('input', updateBalance);
+
+        this.bookLeadAutofill.addEventListener('change', (e) => {
+          const leadId = e.target.value;
+          if (!leadId) return;
+          const lead = this.leads.find(l => l.id === leadId);
+          if (lead) {
+            this.bookVendor.value = lead.brandName;
+            this.bookContact.value = lead.fullName;
+            this.bookPhone.value = lead.phone;
+            this.bookCategory.value = `${lead.category} (${lead.memberId})`;
+            this.bookNotes.value = lead.notes || '';
+          }
+        });
+
+        this.bookingForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.saveBookingFromModal(false);
+        });
+
+        document.getElementById('btn-save-and-receipt').addEventListener('click', () => {
+          this.saveBookingFromModal(true);
+        });
+
+        document.getElementById('lead-onboarding-form').addEventListener('submit', (e) => {
+          e.preventDefault();
+          this.saveLeadFromForm(false);
+        });
+        document.getElementById('save-and-book-lead-btn').addEventListener('click', () => {
+          this.saveLeadFromForm(true);
+        });
+
+        document.getElementById('lead-filter-select').addEventListener('change', () => this.renderLeadsTable());
+        document.getElementById('lead-search-input').addEventListener('input', () => this.renderLeadsTable());
+        document.getElementById('payment-search-input').addEventListener('input', () => this.renderPaymentsTable());
+      }
+
+      switchView(viewId) {
+        this.navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.view === viewId));
+        this.views.forEach(v => v.classList.toggle('active', v.id === viewId));
+      }
+
+      setGeneratorMode(mode) {
+        this.generatorMode = mode;
+        document.getElementById('mode-sqft-btn').classList.toggle('active', mode === 'sqft');
+        document.getElementById('mode-dims-btn').classList.toggle('active', mode === 'dims');
+        document.getElementById('mode-sqft-inputs').style.display = mode === 'sqft' ? 'block' : 'none';
+        document.getElementById('mode-dims-inputs').style.display = mode === 'dims' ? 'block' : 'none';
+      }
+
+      handleSpecUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target.result.trim();
+          try {
+            if (content.startsWith('{')) {
+              const data = JSON.parse(content);
+              if (data.totalSqFt && data.stallSqFt) {
+                this.setGeneratorMode('sqft');
+                this.genTotalSqft.value = data.totalSqFt;
+                this.genStallSqft.value = data.stallSqFt;
+              } else if (data.length && data.breadth) {
+                this.setGeneratorMode('dims');
+                this.genHallLength.value = data.length;
+                this.genHallBreadth.value = data.breadth;
+                if (data.stallWidth) this.genStallW.value = data.stallWidth;
+                if (data.stallDepth) this.genStallD.value = data.stallDepth;
+              }
+              if (data.passage) this.genPassageFt.value = data.passage;
+              if (data.freeway) this.genFreewayFt.value = data.freeway;
+              this.generateOptimizedLayout();
+              return;
+            }
+
+            const nums = content.match(/\d+(\.\d+)?/g);
+            if (nums && nums.length >= 2) {
+              const n1 = parseFloat(nums[0]);
+              const n2 = parseFloat(nums[1]);
+              if (n1 >= 400 && n2 <= 400) {
+                this.setGeneratorMode('sqft');
+                this.genTotalSqft.value = n1;
+                this.genStallSqft.value = n2;
+              } else {
+                this.setGeneratorMode('dims');
+                this.genHallLength.value = n1;
+                this.genHallBreadth.value = n2;
+                if (nums[2]) this.genStallW.value = parseFloat(nums[2]);
+                if (nums[3]) this.genStallD.value = parseFloat(nums[3]);
+              }
+              this.generateOptimizedLayout();
+            }
+          } catch (err) {
+            this.showToast('Unable to parse specification file.');
+          }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+      }
+
+      // =====================================================================
+      // DEEP OPERATIONS-RESEARCH 2D SPATIAL PACKING ENGINE (ZERO DEAD SPACE)
+      // =====================================================================
+      /**
+       * Solves exact 1D partitioning of `span` into:
+       *  - optional top/start perimeter row (1 * sD)
+       *  - k back-to-back double islands (2 * sD each)
+       *  - m single rows (1 * sD each, facing a passage)
+       *  - optional bottom/end perimeter row (1 * sD)
+       * such that total stall bands are maximized and ALL remaining slack is
+       * absorbed into the walking passages (>= minPassage). Zero dead white space!
+       */
+      solveExact1DBandPartition(span, sD, minPassage) {
+        let best = null;
+
+        for (let topWall = 1; topWall >= 0; topWall--) {
+          for (let botWall = 1; botWall >= 0; botWall--) {
+            const maxPossibleRows = Math.floor(span / sD);
+            for (let doubles = Math.floor(maxPossibleRows / 2); doubles >= 0; doubles--) {
+              for (let singles = maxPossibleRows; singles >= 0; singles--) {
+                const totalRows = topWall + botWall + 2 * doubles + singles;
+                if (totalRows === 0) continue;
+
+                const numGroups = topWall + botWall + doubles + singles;
+                const numPassages = Math.max(1, numGroups - 1);
+
+                const stallUsed = totalRows * sD;
+                const minPassageNeeded = numPassages * minPassage;
+
+                if (stallUsed + minPassageNeeded <= span + 0.001) {
+                  const totalPassageSpace = span - stallUsed;
+                  const passageWidth = totalPassageSpace / numPassages;
+
+                  // Prefer maximum totalRows; tie-break by fewer passages (more back-to-back islands) and perimeter usage
+                  const score = totalRows * 1000 + (topWall + botWall) * 20 + doubles * 10;
+                  if (!best || score > best.score) {
+                    best = {
+                      topWall,
+                      botWall,
+                      doubles,
+                      singles,
+                      totalRows,
+                      numPassages,
+                      passageWidth,
+                      score
+                    };
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Fallback if hall is extremely small
+        if (!best) {
+          return {
+            topWall: span >= sD ? 1 : 0,
+            botWall: 0,
+            doubles: 0,
+            singles: 0,
+            totalRows: span >= sD ? 1 : 0,
+            numPassages: 1,
+            passageWidth: Math.max(0, span - sD),
+            score: 1
+          };
+        }
+
+        // Build ordered sequence of bands along [0 .. span]
+        const bands = [];
+        let cursor = 0;
+        let passagesLeft = best.numPassages;
+
+        const pushPassage = () => {
+          if (passagesLeft > 0 && best.passageWidth > 0.01) {
+            bands.push({ type: 'passage', start: cursor, size: best.passageWidth });
+            cursor += best.passageWidth;
+            passagesLeft--;
+          }
+        };
+
+        if (best.topWall) {
+          bands.push({ type: 'stall_row', start: cursor, size: sD, facing: 'down' });
+          cursor += sD;
+          pushPassage();
+        }
+
+        for (let d = 0; d < best.doubles; d++) {
+          bands.push({ type: 'stall_row', start: cursor, size: sD, facing: 'up', islandPart: 'top' });
+          cursor += sD;
+          bands.push({ type: 'stall_row', start: cursor, size: sD, facing: 'down', islandPart: 'bottom' });
+          cursor += sD;
+          pushPassage();
+        }
+
+        for (let s = 0; s < best.singles; s++) {
+          bands.push({ type: 'stall_row', start: cursor, size: sD, facing: 'down' });
+          cursor += sD;
+          pushPassage();
+        }
+
+        if (best.botWall) {
+          // Ensure any remaining passage is placed before the bottom perimeter row
+          while (passagesLeft > 0) pushPassage();
+          bands.push({ type: 'stall_row', start: span - sD, size: sD, facing: 'up' });
+        }
+
+        return { ...best, bands };
+      }
+
+      /**
+       * Candidate A: Horizontal Bays with Central Vertical Concourse (Zero Dead Space)
+       * Every wing packs the exact maximum integer stalls, and any leftover horizontal slack
+       * is either converted into Side-Wall Perimeter Stalls OR absorbed into the Central Concourse!
+       */
+      buildTopologyHorizontalBays(L, B, sW, sD, minPassage, minFreeway) {
+        const stalls = [];
+        const passages = [];
+        const freeways = [];
+
+        // Check if adding Left & Right Side-Wall Vertical Perimeter Columns (depth sD + passage) increases capacity
+        const maxWingStallsNoSideWalls = Math.floor((L - minFreeway) / sW);
+        const leftCount = Math.floor(maxWingStallsNoSideWalls / 2);
+        const rightCount = maxWingStallsNoSideWalls - leftCount;
+
+        // Effective Central Freeway absorbs any leftover horizontal slack so wings touch walls & freeway with 0 white gap!
+        const leftWingW = leftCount * sW;
+        const rightWingW = rightCount * sW;
+        const effectiveFreewayW = Math.max(minFreeway, L - leftWingW - rightWingW);
+        const freewayX = leftWingW;
+
+        const vPlan = this.solveExact1DBandPartition(B, sD, minPassage);
+        const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let secIdx = 0;
+
+        vPlan.bands.forEach(band => {
+          if (band.type === 'passage') {
+            passages.push({
+              xFt: 0,
+              yFt: band.start,
+              wFt: L,
+              hFt: band.size,
+              orientation: 'horizontal',
+              label: `${Math.round(band.size * 10) / 10}ft Passage`
+            });
+          } else if (band.type === 'stall_row') {
+            const sec = rowLetters[secIdx++ % 26];
+            let num = 1;
+            // Left Wing Stalls [0 .. leftWingW]
+            for (let i = 0; i < leftCount; i++) {
+              stalls.push({
+                code: `${sec}${num++}`,
+                section: sec,
+                xFt: i * sW,
+                yFt: band.start,
+                wFt: sW,
+                dFt: sD,
+                isCornerOrFreeway: (i === leftCount - 1) || (i === 0)
+              });
+            }
+            // Right Wing Stalls [freewayX + effectiveFreewayW .. L]
+            const rightStart = freewayX + effectiveFreewayW;
+            for (let i = 0; i < rightCount; i++) {
+              stalls.push({
+                code: `${sec}${num++}`,
+                section: sec,
+                xFt: rightStart + i * sW,
+                yFt: band.start,
+                wFt: sW,
+                dFt: sD,
+                isCornerOrFreeway: (i === 0) || (i === rightCount - 1)
+              });
+            }
+          }
+        });
+
+        freeways.push({
+          xFt: freewayX,
+          yFt: 0,
+          wFt: effectiveFreewayW,
+          hFt: B,
+          orientation: 'vertical',
+          label: `MAIN CONCOURSE (${Math.round(effectiveFreewayW * 10) / 10} ft)`
+        });
+
+        return {
+          stalls,
+          passages,
+          freeways,
+          strategyName: 'Horizontal Back-to-Back Bays'
+        };
+      }
+
+      /**
+       * Candidate B: 4-Wall Perimeter Ring + Interior Back-to-Back Islands (Zero Dead Space)
+       * Places vertical stall columns along Left Wall (x=0) and Right Wall (x=L-sD),
+       * vertical walking passages inside them, and packs the middle core with horizontal rows & central concourse.
+       */
+      buildTopologyPerimeterIslands(L, B, sW, sD, minPassage, minFreeway) {
+        // Requires enough width for Left Wall (sD) + Left Passage (minPassage) + Core + Right Passage (minPassage) + Right Wall (sD)
+        const minRequiredW = 2 * sD + 2 * minPassage + sW + minFreeway;
+        if (L < minRequiredW) {
+          return this.buildTopologyHorizontalBays(L, B, sW, sD, minPassage, minFreeway);
+        }
+
+        const stalls = [];
+        const passages = [];
+        const freeways = [];
+        const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let secIdx = 0;
+
+        // 1. Left & Right Wall Vertical Columns (each stall is sD wide x sW tall)
+        const sideColCount = Math.floor(B / sW);
+        const sideSlackH = B - sideColCount * sW;
+        const sideStepH = sideColCount > 0 ? B / sideColCount : sW;
+
+        const secLeft = rowLetters[secIdx++ % 26];
+        for (let i = 0; i < sideColCount; i++) {
+          stalls.push({
+            code: `${secLeft}${i + 1}`,
+            section: secLeft,
+            xFt: 0,
+            yFt: i * sideStepH,
+            wFt: sD,
+            dFt: sideStepH,
+            isCornerOrFreeway: i === 0 || i === sideColCount - 1
+          });
+        }
+
+        const secRight = rowLetters[secIdx++ % 26];
+        for (let i = 0; i < sideColCount; i++) {
+          stalls.push({
+            code: `${secRight}${i + 1}`,
+            section: secRight,
+            xFt: L - sD,
+            yFt: i * sideStepH,
+            wFt: sD,
+            dFt: sideStepH,
+            isCornerOrFreeway: i === 0 || i === sideColCount - 1
+          });
+        }
+
+        // Core width between left and right perimeter walls
+        const innerSpanW = L - 2 * sD;
+        // Core stalls available after reserving 2 side passages + 1 central freeway
+        const maxCoreStallsPerRow = Math.floor((innerSpanW - 2 * minPassage - minFreeway) / sW);
+        if (maxCoreStallsPerRow <= 0) {
+          return this.buildTopologyHorizontalBays(L, B, sW, sD, minPassage, minFreeway);
+        }
+
+        const leftCoreCount = Math.ceil(maxCoreStallsPerRow / 2);
+        const rightCoreCount = maxCoreStallsPerRow - leftCoreCount;
+        const coreStallWUsed = maxCoreStallsPerRow * sW;
+        const remainingCorridorW = innerSpanW - coreStallWUsed;
+
+        // Distribute remainingCorridorW across Left Passage, Central Concourse, and Right Passage
+        const sidePassageW = Math.max(minPassage, Math.round(((remainingCorridorW - minFreeway) / 2) * 10) / 10);
+        const centerFreewayW = Math.max(minFreeway, remainingCorridorW - 2 * sidePassageW);
+
+        const leftPassageX = sD;
+        const leftCoreX = leftPassageX + sidePassageW;
+        const centerFreewayX = leftCoreX + leftCoreCount * sW;
+        const rightCoreX = centerFreewayX + centerFreewayW;
+        const rightPassageX = rightCoreX + rightCoreCount * sW;
+
+        // Partition vertical B for the core rows
+        const vPlan = this.solveExact1DBandPartition(B, sD, minPassage);
+
+        vPlan.bands.forEach(band => {
+          if (band.type === 'passage') {
+            passages.push({
+              xFt: leftPassageX,
+              yFt: band.start,
+              wFt: innerSpanW,
+              hFt: band.size,
+              orientation: 'horizontal',
+              label: `${Math.round(band.size * 10) / 10}ft Passage`
+            });
+          } else if (band.type === 'stall_row') {
+            const sec = rowLetters[secIdx++ % 26];
+            let num = 1;
+            for (let i = 0; i < leftCoreCount; i++) {
+              stalls.push({
+                code: `${sec}${num++}`,
+                section: sec,
+                xFt: leftCoreX + i * sW,
+                yFt: band.start,
+                wFt: sW,
+                dFt: sD,
+                isCornerOrFreeway: true
+              });
+            }
+            for (let i = 0; i < rightCoreCount; i++) {
+              stalls.push({
+                code: `${sec}${num++}`,
+                section: sec,
+                xFt: rightCoreX + i * sW,
+                yFt: band.start,
+                wFt: sW,
+                dFt: sD,
+                isCornerOrFreeway: true
+              });
+            }
+          }
+        });
+
+        // Add Left & Right vertical walking passages
+        passages.push({
+          xFt: leftPassageX,
+          yFt: 0,
+          wFt: sidePassageW,
+          hFt: B,
+          orientation: 'vertical',
+          label: `${Math.round(sidePassageW * 10) / 10}ft Passage`
+        });
+        passages.push({
+          xFt: rightPassageX,
+          yFt: 0,
+          wFt: sidePassageW,
+          hFt: B,
+          orientation: 'vertical',
+          label: `${Math.round(sidePassageW * 10) / 10}ft Passage`
+        });
+
+        freeways.push({
+          xFt: centerFreewayX,
+          yFt: 0,
+          wFt: centerFreewayW,
+          hFt: B,
+          orientation: 'vertical',
+          label: `MAIN CONCOURSE (${Math.round(centerFreewayW * 10) / 10} ft)`
+        });
+
+        return {
+          stalls,
+          passages,
+          freeways,
+          strategyName: '4-Wall Perimeter + Central Islands'
+        };
+      }
+
+      /**
+       * Candidate C: Vertical Back-to-Back Bays with Central Horizontal Concourse (Zero Dead Space)
+       * Partition horizontally (L) into vertical stall columns & vertical passages, split by a horizontal Main Concourse.
+       */
+      buildTopologyVerticalBays(L, B, sW, sD, minPassage, minFreeway) {
+        const stalls = [];
+        const passages = [];
+        const freeways = [];
+
+        const maxColStalls = Math.floor((B - minFreeway) / sW);
+        if (maxColStalls <= 0) {
+          return this.buildTopologyHorizontalBays(L, B, sW, sD, minPassage, minFreeway);
+        }
+
+        const topCount = Math.floor(maxColStalls / 2);
+        const botCount = maxColStalls - topCount;
+        const topWingH = topCount * sW;
+        const botWingH = botCount * sW;
+        const effectiveFreewayH = Math.max(minFreeway, B - topWingH - botWingH);
+        const freewayY = topWingH;
+
+        const hPlan = this.solveExact1DBandPartition(L, sD, minPassage);
+        const rowLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let secIdx = 0;
+
+        hPlan.bands.forEach(band => {
+          if (band.type === 'passage') {
+            passages.push({
+              xFt: band.start,
+              yFt: 0,
+              wFt: band.size,
+              hFt: B,
+              orientation: 'vertical',
+              label: `${Math.round(band.size * 10) / 10}ft Passage`
+            });
+          } else if (band.type === 'stall_row') {
+            const sec = rowLetters[secIdx++ % 26];
+            let num = 1;
+            for (let i = 0; i < topCount; i++) {
+              stalls.push({
+                code: `${sec}${num++}`,
+                section: sec,
+                xFt: band.start,
+                yFt: i * sW,
+                wFt: sD,
+                dFt: sW,
+                isCornerOrFreeway: i === topCount - 1 || i === 0
+              });
+            }
+            const botStart = freewayY + effectiveFreewayH;
+            for (let i = 0; i < botCount; i++) {
+              stalls.push({
+                code: `${sec}${num++}`,
+                section: sec,
+                xFt: band.start,
+                yFt: botStart + i * sW,
+                wFt: sD,
+                dFt: sW,
+                isCornerOrFreeway: i === 0 || i === botCount - 1
+              });
+            }
+          }
+        });
+
+        freeways.push({
+          xFt: 0,
+          yFt: freewayY,
+          wFt: L,
+          hFt: effectiveFreewayH,
+          orientation: 'horizontal',
+          label: `MAIN CONCOURSE (${Math.round(effectiveFreewayH * 10) / 10} ft)`
+        });
+
+        return {
+          stalls,
+          passages,
+          freeways,
+          strategyName: 'Vertical Back-to-Back Bays'
+        };
+      }
+
+      generateOptimizedLayout() {
+        const hallName = this.genHallName.value.trim() || 'Main Exhibition Hall';
+        const passageFt = Math.max(3, parseFloat(this.genPassageFt.value) || 6);
+        const freewayFt = Math.max(4, parseFloat(this.genFreewayFt.value) || 8);
+        const basePrice = parseFloat(this.genDefaultPrice.value) || 18000;
+        const cornerPremium = this.genCornerPremium.checked;
+        const strategyPref = this.genStrategy.value;
+
+        let hallLengthFt, hallBreadthFt, stallWFt, stallDFt;
+
+        if (this.generatorMode === 'sqft') {
+          const totalSqFt = Math.max(200, parseFloat(this.genTotalSqft.value) || 3000);
+          const stallSqFt = Math.max(16, parseFloat(this.genStallSqft.value) || 64);
+          const ratio = parseFloat(this.genAspectRatio.value) || 1.5;
+
+          hallBreadthFt = Math.round(Math.sqrt(totalSqFt / ratio));
+          hallLengthFt = Math.round(totalSqFt / hallBreadthFt);
+
+          const side = Math.round(Math.sqrt(stallSqFt) * 10) / 10;
+          stallWFt = side;
+          stallDFt = side;
+        } else {
+          hallLengthFt = Math.max(20, parseFloat(this.genHallLength.value) || 67);
+          hallBreadthFt = Math.max(20, parseFloat(this.genHallBreadth.value) || 45);
+          stallWFt = Math.max(4, parseFloat(this.genStallW.value) || 8);
+          stallDFt = Math.max(4, parseFloat(this.genStallD.value) || 8);
+        }
+
+        const pxPerFt = Math.max(6.5, Math.min(14, 920 / hallLengthFt));
+
+        // Evaluate all 3 candidate topologies
+        const candHoriz = this.buildTopologyHorizontalBays(hallLengthFt, hallBreadthFt, stallWFt, stallDFt, passageFt, freewayFt);
+        const candPerim = this.buildTopologyPerimeterIslands(hallLengthFt, hallBreadthFt, stallWFt, stallDFt, passageFt, freewayFt);
+        const candVert  = this.buildTopologyVerticalBays(hallLengthFt, hallBreadthFt, stallWFt, stallDFt, passageFt, freewayFt);
+
+        let chosen;
+        if (strategyPref === 'horizontal_bays') {
+          chosen = candHoriz;
+        } else if (strategyPref === 'perimeter_islands') {
+          chosen = candPerim;
+        } else if (strategyPref === 'vertical_bays') {
+          chosen = candVert;
+        } else {
+          // Auto-Solver picks the topology that packs the maximum number of stalls!
+          const candidates = [candPerim, candHoriz, candVert];
+          candidates.sort((a, b) => b.stalls.length - a.stalls.length);
+          chosen = candidates[0];
+        }
+
+        const generatedStalls = chosen.stalls.map(s => {
+          const isPrime = cornerPremium && s.isCornerOrFreeway;
+          const price = isPrime ? Math.round((basePrice * 1.15) / 500) * 500 : basePrice;
+          return {
+            id: `STALL_${s.code}`,
+            code: s.code,
+            section: s.section,
+            xFt: s.xFt,
+            yFt: s.yFt,
+            wFt: s.wFt,
+            dFt: s.dFt,
+            xPx: Math.round(s.xFt * pxPerFt),
+            yPx: Math.round(s.yFt * pxPerFt),
+            wPx: Math.round(s.wFt * pxPerFt),
+            hPx: Math.round(s.dFt * pxPerFt),
+            widthFt: Math.round(s.wFt * 10) / 10,
+            depthFt: Math.round(s.dFt * 10) / 10,
+            areaSqFt: Math.round(s.wFt * s.dFt),
+            isPrime,
+            status: 'available',
+            price,
+            discount: 0,
+            paid: 0,
+            vendor: '',
+            contact: '',
+            phone: '',
+            category: '',
+            payMode: 'UPI / GPay / PhonePe',
+            payRef: '',
+            notes: isPrime ? 'Prime Concourse / Corner Frontage' : ''
+          };
+        });
+
+        this.layoutMeta = {
+          hallName,
+          hallLengthFt,
+          hallBreadthFt,
+          totalAreaSqFt: Math.round(hallLengthFt * hallBreadthFt),
+          stallW: stallWFt,
+          stallD: stallDFt,
+          stallAreaSqFt: Math.round(stallWFt * stallDFt),
+          passageFt,
+          freewayFt,
+          pxPerFt,
+          svgWidth: Math.round(hallLengthFt * pxPerFt),
+          svgHeight: Math.round(hallBreadthFt * pxPerFt),
+          passages: chosen.passages,
+          freeways: chosen.freeways,
+          strategyUsed: chosen.strategyName
+        };
+
+        this.stalls = generatedStalls;
+        this.scale = 1;
+        this.saveAll();
+        this.showToast(`Optimal floorplan computed: ${generatedStalls.length} stalls (${chosen.strategyName}) with 0% dead space.`);
+      }
+
+      // =====================================================================
+      // RENDER ARCHITECTURAL CAD FLOORPLAN, DIRECTORY & POPUP MAP
+      // =====================================================================
+      renderAll() {
+        this.updateTopStats();
+        this.renderFloorplan();
+        this.renderDirectory();
+        this.renderLeadsTable();
+        this.renderPaymentsTable();
+      }
+
+      updateTopStats() {
+        const total = this.stalls.length;
+        const available = this.stalls.filter(s => s.status === 'available').length;
+        const booked = this.stalls.filter(s => s.status === 'booked').length;
+        const reserved = this.stalls.filter(s => s.status === 'reserved').length;
+        const blocked = this.stalls.filter(s => s.status === 'blocked').length;
+
+        let revenue = 0;
+        let balance = 0;
+        this.stalls.forEach(s => {
+          if (s.status === 'booked' || s.status === 'reserved') {
+            const net = Math.max(0, (s.price || 0) - (s.discount || 0));
+            const paid = s.paid || 0;
+            revenue += paid;
+            balance += Math.max(0, net - paid);
+          }
+        });
+
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-available').textContent = available;
+        document.getElementById('stat-booked').textContent = booked;
+        document.getElementById('stat-reserved').textContent = reserved;
+        document.getElementById('stat-blocked').textContent = blocked;
+        document.getElementById('stat-revenue').textContent = `₹${revenue.toLocaleString('en-IN')}`;
+        document.getElementById('stat-balance').textContent = `Receivable: ₹${balance.toLocaleString('en-IN')}`;
+
+        const futureLeads = this.leads.filter(l => l.leadStatus.includes('Future')).length;
+        document.getElementById('stat-leads').textContent = this.leads.length;
+        document.getElementById('stat-future-leads').textContent = `${futureLeads} Future Pipeline`;
+
+        document.getElementById('nav-stall-count').textContent = total;
+        document.getElementById('nav-lead-count').textContent = this.leads.length;
+        document.getElementById('nav-payment-count').textContent = this.payments.length;
+
+        document.getElementById('leg-available').textContent = available;
+        document.getElementById('leg-booked').textContent = booked;
+        document.getElementById('leg-reserved').textContent = reserved;
+        document.getElementById('leg-blocked').textContent = blocked;
+
+        if (this.layoutMeta) {
+          const m = this.layoutMeta;
+          document.getElementById('stat-hall-dims').textContent = `${m.hallLengthFt}×${m.hallBreadthFt} ft (${m.totalAreaSqFt.toLocaleString()} sq.ft)`;
+          const totalStallArea = this.stalls.reduce((acc, s) => acc + (s.areaSqFt || m.stallAreaSqFt), 0);
+          const stallPct = Math.min(100, Math.round((totalStallArea / m.totalAreaSqFt) * 100));
+          const passageArea = Math.max(0, m.totalAreaSqFt - totalStallArea);
+          const passagePct = 100 - stallPct;
+
+          document.getElementById('opt-topology').textContent = m.strategyUsed || 'Auto-Optimized';
+          document.getElementById('opt-dims').textContent = `${m.hallLengthFt}'-0" × ${m.hallBreadthFt}'-0"`;
+          document.getElementById('opt-total-area').textContent = `${m.totalAreaSqFt.toLocaleString()} sq ft`;
+          document.getElementById('opt-stall-size').textContent = `${m.stallW}×${m.stallD} ft (${m.stallAreaSqFt} sq ft)`;
+          document.getElementById('opt-stall-count').textContent = `${total} Stalls`;
+          document.getElementById('opt-stall-area').textContent = `${totalStallArea.toLocaleString()} sq ft (${stallPct}%)`;
+          document.getElementById('opt-passage-area').textContent = `${passageArea.toLocaleString()} sq ft (${passagePct}%)`;
+        } else {
+          document.getElementById('stat-hall-dims').textContent = 'No floorplan active';
+          document.getElementById('opt-topology').textContent = '—';
+          document.getElementById('opt-dims').textContent = '—';
+          document.getElementById('opt-total-area').textContent = '—';
+          document.getElementById('opt-stall-size').textContent = '—';
+          document.getElementById('opt-stall-count').textContent = '0 Stalls';
+          document.getElementById('opt-stall-area').textContent = '0 sq ft (0%)';
+          document.getElementById('opt-passage-area').textContent = '0 sq ft (0%)';
+        }
+      }
+
+      buildFloorplanSVGMarkup(meta) {
+        const W = meta.svgWidth;
+        const H = meta.svgHeight;
+        const p = meta.pxPerFt;
+
+        let svg = `
+          <defs>
+            <pattern id="passagePattern" width="16" height="16" patternUnits="userSpaceOnUse">
+              <rect width="16" height="16" fill="#fef3c7"/>
+              <path d="M 16 0 L 0 0 0 16" fill="none" stroke="#fde68a" stroke-width="1"/>
+            </pattern>
+            <pattern id="concoursePattern" width="20" height="20" patternUnits="userSpaceOnUse">
+              <rect width="20" height="20" fill="#dbeafe"/>
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#bfdbfe" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <!-- Base Slab -->
+          <rect width="${W}" height="${H}" fill="#f8fafc" />
+        `;
+
+        // 1. Walking Passages (Warm Architectural Travertine Grid)
+        (meta.passages || []).forEach(ps => {
+          const x = ps.xFt * p;
+          const y = ps.yFt * p;
+          const w = ps.wFt * p;
+          const h = ps.hFt * p;
+          svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#passagePattern)" stroke="#d97706" stroke-width="0.8" stroke-dasharray="4 3" />`;
+        });
+
+        // 2. Walking Passage Labels
+        (meta.passages || []).forEach(ps => {
+          const x = ps.xFt * p;
+          const y = ps.yFt * p;
+          const w = ps.wFt * p;
+          const h = ps.hFt * p;
+          if (ps.orientation === 'vertical' && w >= 24) {
+            svg += `<text x="${x + w / 2}" y="${y + h / 2}" font-family="Plus Jakarta Sans, sans-serif" font-size="9.5" font-weight="700" fill="#92400e" text-anchor="middle" transform="rotate(-90 ${x + w / 2} ${y + h / 2})">WALKING AISLE (${ps.label})</text>`;
+          } else if (ps.orientation !== 'vertical' && h >= 18) {
+            svg += `<text x="${x + 16}" y="${y + h / 2 + 3.5}" font-family="Plus Jakarta Sans, sans-serif" font-size="9.5" font-weight="700" fill="#92400e">↔ WALKING AISLE (${ps.label})</text>`;
+            if (w > 340) {
+              svg += `<text x="${x + w - 165}" y="${y + h / 2 + 3.5}" font-family="Plus Jakarta Sans, sans-serif" font-size="9.5" font-weight="700" fill="#92400e">↔ WALKING AISLE (${ps.label})</text>`;
+            }
+          }
+        });
+
+        // 3. Main Concourse / Freeways
+        (meta.freeways || []).forEach(fw => {
+          const x = fw.xFt * p;
+          const y = fw.yFt * p;
+          const w = fw.wFt * p;
+          const h = fw.hFt * p;
+          svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#concoursePattern)" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="6 4" />`;
+
+          if (fw.orientation === 'horizontal') {
+            svg += `
+              <line x1="${x + 24}" y1="${y + h / 2}" x2="${x + w - 24}" y2="${y + h / 2}" stroke="#2563eb" stroke-width="1.2" stroke-dasharray="5 5" opacity="0.6" />
+              <text x="${x + 48}" y="${y + h / 2 - 5}" font-family="Plus Jakarta Sans, sans-serif" font-size="9.5" font-weight="800" fill="#1e40af" text-anchor="middle">ENTRANCE →</text>
+              <text x="${x + w / 2}" y="${y + h / 2 + 4}" font-family="Plus Jakarta Sans, sans-serif" font-size="10.5" font-weight="800" fill="#1e3a8a" text-anchor="middle">${fw.label}</text>
+              <text x="${x + w - 48}" y="${y + h / 2 - 5}" font-family="Plus Jakarta Sans, sans-serif" font-size="9.5" font-weight="800" fill="#1e40af" text-anchor="middle">→ EXIT</text>
+            `;
+          } else {
+            svg += `
+              <line x1="${x + w / 2}" y1="${y + 22}" x2="${x + w / 2}" y2="${y + h - 22}" stroke="#2563eb" stroke-width="1.2" stroke-dasharray="5 5" opacity="0.6" />
+              <text x="${x + w / 2}" y="${y + 14}" font-family="Plus Jakarta Sans, sans-serif" font-size="9.5" font-weight="800" fill="#1e40af" text-anchor="middle">↑ EXIT GATE</text>
+              <text x="${x + w / 2}" y="${y + h / 2}" font-family="Plus Jakarta Sans, sans-serif" font-size="10.5" font-weight="800" fill="#1e3a8a" text-anchor="middle" transform="rotate(-90 ${x + w / 2} ${y + h / 2})">${fw.label}</text>
+              <text x="${x + w / 2}" y="${y + h - 7}" font-family="Plus Jakarta Sans, sans-serif" font-size="9.5" font-weight="800" fill="#0f766e" text-anchor="middle">↑ MAIN ENTRANCE</text>
+            `;
+          }
+        });
+
+        // Outer Structural Wall Frame
+        svg += `<rect x="1.5" y="1.5" width="${W - 3}" height="${H - 3}" fill="none" stroke="#0f172a" stroke-width="3" rx="3" />`;
+
+        return svg;
+      }
+
+      renderFloorplan() {
+        if (!this.layoutMeta || this.stalls.length === 0) {
+          this.emptyLayoutState.style.display = 'block';
+          this.canvasWorld.style.display = 'none';
+          return;
+        }
+
+        this.emptyLayoutState.style.display = 'none';
+        this.canvasWorld.style.display = 'block';
+
+        const W = this.layoutMeta.svgWidth;
+        const H = this.layoutMeta.svgHeight;
+
+        this.canvasWorld.style.width = `${W}px`;
+        this.canvasWorld.style.height = `${H}px`;
+        this.floorplanSvg.setAttribute('width', W);
+        this.floorplanSvg.setAttribute('height', H);
+        this.floorplanSvg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        this.floorplanSvg.innerHTML = this.buildFloorplanSVGMarkup(this.layoutMeta);
+
+        const m = this.layoutMeta;
+        document.getElementById('toolbar-hall-badge').textContent =
+          `— ${m.hallName} (${m.hallLengthFt}'×${m.hallBreadthFt}' = ${m.totalAreaSqFt.toLocaleString()} sq.ft • ${this.stalls.length} Stalls • ${m.strategyUsed})`;
+
+        this.markersLayer.innerHTML = '';
+        this.stalls.forEach(stall => {
+          const el = document.createElement('div');
+          const isHighlighted = this.highlightedStallIds.has(stall.id);
+          el.className = `stall-marker status-${stall.status}${isHighlighted ? ' highlight-pulse' : ''}`;
+          el.style.left = `${stall.xPx + 1}px`;
+          el.style.top = `${stall.yPx + 1}px`;
+          el.style.width = `${Math.max(24, stall.wPx - 2)}px`;
+          el.style.height = `${Math.max(20, stall.hPx - 2)}px`;
+
+          let subLabel = '';
+          if (stall.status === 'booked' || stall.status === 'reserved') {
+            subLabel = stall.vendor || (stall.status === 'booked' ? 'BOOKED' : 'RSRVD');
+          } else if (stall.status === 'blocked') {
+            subLabel = stall.vendor || 'BLOCKED';
+          } else {
+            subLabel = `₹${Math.round((stall.price || 0) / 1000)}k`;
+          }
+
+          el.title = `Stall ${stall.code} (${stall.widthFt}×${stall.depthFt} ft = ${stall.areaSqFt} sq.ft) • Status: ${stall.status.toUpperCase()} • ${stall.vendor || 'Available'} • ₹${(stall.price || 0).toLocaleString('en-IN')}`;
+          el.innerHTML = `
+            <span class="marker-code">${stall.code}</span>
+            <span class="marker-sub">${subLabel}</span>
+          `;
+
+          el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.openBookingModal(stall.id);
+          });
+
+          this.markersLayer.appendChild(el);
+        });
+
+        this.applyZoom();
+      }
+
+      applyZoom() {
+        this.canvasWorld.style.transform = `scale(${this.scale})`;
+      }
+
+      renderDirectory() {
+        const list = document.getElementById('stall-list');
+        list.innerHTML = '';
+
+        const filtered = this.stalls.filter(s => {
+          const matchTab = this.currentFilter === 'all' || s.status === this.currentFilter;
+          const matchQ = !this.searchQuery ||
+            s.code.toLowerCase().includes(this.searchQuery) ||
+            (s.vendor && s.vendor.toLowerCase().includes(this.searchQuery)) ||
+            (s.phone && s.phone.toLowerCase().includes(this.searchQuery));
+          return matchTab && matchQ;
+        });
+
+        document.getElementById('dir-count-label').textContent = `${filtered.length} of ${this.stalls.length} Units`;
+
+        if (filtered.length === 0) {
+          list.innerHTML = `<div style="text-align:center;padding:2rem 1rem;color:var(--text-muted);font-size:0.78rem;">No stall units match this filter.</div>`;
+          return;
+        }
+
+        filtered.forEach(s => {
+          const card = document.createElement('div');
+          card.className = `stall-card ${s.status}`;
+          const statusLabel = s.status === 'available' ? 'Blank' :
+                              s.status === 'booked' ? 'Filled' :
+                              s.status === 'reserved' ? 'Reserved' : 'Blocked';
+
+          const subText = s.vendor ? `${s.vendor} ${s.phone ? '• ' + s.phone : ''}` : `${s.widthFt}×${s.depthFt}ft (${s.areaSqFt} sq.ft)`;
+          const actionBtns = s.status !== 'available'
+            ? `<div style="display:flex;gap:4px;justify-content:flex-end;margin-top:3px;">
+                ${(s.status === 'booked' || s.status === 'reserved') ? `<button class="btn btn-sm" style="padding:2px 6px;font-size:0.65rem;" onclick="event.stopPropagation();window.app.openReceiptForStall('${s.id}')">Receipt</button>` : ''}
+                <button class="btn btn-sm btn-danger" style="padding:2px 6px;font-size:0.65rem;" title="Delete this stall booking" onclick="event.stopPropagation();window.app.deleteStallBooking('${s.id}')">Delete</button>
+              </div>`
+            : '';
+
+          card.innerHTML = `
+            <div class="stall-card-left">
+              <div class="stall-badge">${s.code}</div>
+              <div>
+                <div class="stall-title">${s.code} <span style="font-weight:500;color:var(--text-muted);font-size:0.7rem;">(${s.areaSqFt} sq.ft)</span></div>
+                <div class="stall-sub">${subText}</div>
+              </div>
+            </div>
+            <div class="stall-card-right">
+              <span class="status-pill ${s.status}">${statusLabel}</span>
+              <div class="price-text">₹${(s.price || 0).toLocaleString('en-IN')}</div>
+              ${actionBtns}
+            </div>
+          `;
+          card.addEventListener('click', () => this.openBookingModal(s.id));
+          list.appendChild(card);
+        });
+      }
+
+      // =====================================================================
+      // INTERACTIVE INVENTORY STATUS QUERY BAR
+      // =====================================================================
+      askAssistant(query) {
+        const q = (query || '').toLowerCase();
+        const drawer = document.getElementById('assistant-drawer');
+        const titleEl = document.getElementById('assistant-answer-title');
+        const subEl = document.getElementById('assistant-answer-sub');
+        const chipsEl = document.getElementById('assistant-answer-chips');
+
+        if (this.stalls.length === 0) {
+          drawer.classList.add('open');
+          titleEl.textContent = 'No Floorplan Computed Yet';
+          subEl.textContent = 'Use the Spatial Layout Engine on the left to generate your hall layout first.';
+          chipsEl.innerHTML = '';
+          return;
+        }
+
+        let matched = [];
+        let heading = '';
+
+        if (q.includes('blank') || q.includes('open') || q.includes('available') || q.includes('free') || q.includes('empty')) {
+          matched = this.stalls.filter(s => s.status === 'available');
+          heading = `Blank (Available) Units: ${matched.length} of ${this.stalls.length} stalls open for allotment`;
+        } else if (q.includes('fill') || q.includes('book') || q.includes('sold')) {
+          matched = this.stalls.filter(s => s.status === 'booked');
+          heading = `Filled (Booked) Units: ${matched.length} stalls allotted`;
+        } else if (q.includes('reserv') || q.includes('hold') || q.includes('pending') || q.includes('balance')) {
+          matched = this.stalls.filter(s => s.status === 'reserved' || ((s.status === 'booked') && (s.paid < (s.price - (s.discount || 0)))));
+          heading = `Reserved / Balance Pending Units: ${matched.length} stalls`;
+        } else if (q.includes('block') || q.includes('office')) {
+          matched = this.stalls.filter(s => s.status === 'blocked');
+          heading = `Blocked / Utility Units: ${matched.length} stalls`;
+        } else if (q.includes('prime') || q.includes('corner')) {
+          matched = this.stalls.filter(s => s.isPrime && s.status === 'available');
+          heading = `Available Prime / Concourse Frontage Units: ${matched.length} stalls`;
+        } else {
+          matched = this.stalls.filter(s =>
+            s.code.toLowerCase().includes(q) ||
+            (s.vendor && s.vendor.toLowerCase().includes(q))
+          );
+          heading = `Filter Results for "${query}": ${matched.length} unit(s)`;
+        }
+
+        this.highlightedStallIds = new Set(matched.map(m => m.id));
+        this.renderFloorplan();
+
+        drawer.classList.add('open');
+        titleEl.textContent = heading;
+        subEl.textContent = 'Select any stall tag below to open the Booking & Layout Selector (highlighted on floorplan):';
+        chipsEl.innerHTML = matched.map(s => {
+          const extra = s.vendor ? ` · ${s.vendor}` : ` · ₹${Math.round(s.price / 1000)}k`;
+          return `<span class="stall-chip ${s.status}" onclick="window.app.openBookingModal('${s.id}')">${s.code}${extra}</span>`;
+        }).join('');
+      }
+
+      // =====================================================================
+      // BOOKING MODAL WITH LIVE POP-UP FLOORPLAN SELECTOR
+      // =====================================================================
+      openBookingModal(stallId, prefillLead = null) {
+        if (this.stalls.length === 0) {
+          this.showToast('Compute a floorplan first to begin booking stalls.');
+          this.switchView('layout-view');
+          return;
+        }
+
+        this.bookStallSelect.innerHTML = this.stalls.map(s => {
+          const stText = s.status === 'available' ? 'BLANK' :
+                         s.status === 'booked' ? `FILLED (${s.vendor})` :
+                         s.status === 'reserved' ? `RESERVED (${s.vendor})` : 'BLOCKED';
+          return `<option value="${s.id}">${s.code} — ${s.widthFt}×${s.depthFt}ft — ${stText}</option>`;
+        }).join('');
+
+        this.bookLeadAutofill.innerHTML = `<option value="">— Select stored lead or enter details manually —</option>` +
+          this.leads.map(l => `<option value="${l.id}">${l.brandName} (${l.fullName} · ${l.phone}) [${l.leadStatus}]</option>`).join('');
+
+        const targetId = stallId || (this.stalls.find(s => s.status === 'available') || this.stalls[0]).id;
+        this.bookStallSelect.value = targetId;
+
+        this.bookingModal.classList.add('active');
+        this.populateBookingModalForStall(targetId);
+
+        if (prefillLead) {
+          this.bookLeadAutofill.value = prefillLead.id;
+          this.bookVendor.value = prefillLead.brandName || '';
+          this.bookContact.value = prefillLead.fullName || '';
+          this.bookPhone.value = prefillLead.phone || '';
+          this.bookCategory.value = `${prefillLead.category || ''} (${prefillLead.memberId || ''})`;
+          this.bookStatusSelect.value = 'booked';
+        }
+      }
+
+      populateBookingModalForStall(stallId) {
+        const stall = this.stalls.find(s => s.id === stallId);
+        if (!stall) return;
+
+        document.getElementById('popup-selected-indicator').textContent = `Active Unit: ${stall.code} (${stall.areaSqFt} sq.ft)`;
+
+        const delBtn = document.getElementById('btn-delete-booking');
+        if (delBtn) {
+          delBtn.style.display = stall.status !== 'available' ? 'inline-flex' : 'none';
+        }
+
+        this.bookStatusSelect.value = stall.status === 'available' ? 'booked' : stall.status;
+        this.bookVendor.value = stall.vendor || '';
+        this.bookContact.value = stall.contact || '';
+        this.bookPhone.value = stall.phone || '';
+        this.bookCategory.value = stall.category || '';
+        this.bookPrice.value = stall.price || 18000;
+        this.bookDiscount.value = stall.discount || 0;
+        this.bookPaid.value = stall.paid || (stall.status === 'available' ? stall.price : 0);
+        this.bookPayMode.value = stall.payMode || 'UPI / GPay / PhonePe';
+        this.bookPayRef.value = stall.payRef || '';
+        this.bookNotes.value = stall.notes || '';
+
+        const net = Math.max(0, (parseFloat(this.bookPrice.value) || 0) - (parseFloat(this.bookDiscount.value) || 0));
+        const paid = parseFloat(this.bookPaid.value) || 0;
+        const bal = Math.max(0, net - paid);
+        this.bookBalanceDisplay.textContent = `₹${bal.toLocaleString('en-IN')}`;
+
+        this.renderPopupLayoutMap(stallId);
+      }
+
+      renderPopupLayoutMap(selectedStallId) {
+        if (!this.layoutMeta) return;
+
+        document.getElementById('pop-cnt-blank').textContent = this.stalls.filter(s => s.status === 'available').length;
+        document.getElementById('pop-cnt-filled').textContent = this.stalls.filter(s => s.status === 'booked').length;
+        document.getElementById('pop-cnt-reserved').textContent = this.stalls.filter(s => s.status === 'reserved').length;
+        document.getElementById('pop-cnt-blocked').textContent = this.stalls.filter(s => s.status === 'blocked').length;
+
+        const W = this.layoutMeta.svgWidth;
+        const H = this.layoutMeta.svgHeight;
+        const viewportEl = document.getElementById('popup-map-viewport');
+        const vRect = viewportEl ? viewportEl.getBoundingClientRect() : { width: 560, height: 360 };
+        const availW = (vRect.width > 120 ? vRect.width : 560) - 20;
+        const availH = (vRect.height > 120 ? vRect.height : 360) - 20;
+        const scale = Math.min(availW / W, availH / H, 1);
+
+        const scaledW = Math.round(W * scale);
+        const scaledH = Math.round(H * scale);
+
+        this.popupMapWorld.style.width = `${scaledW}px`;
+        this.popupMapWorld.style.height = `${scaledH}px`;
+        this.popupMapWorld.style.transform = 'none';
+
+        const innerPlane = document.createElement('div');
+        innerPlane.style.position = 'relative';
+        innerPlane.style.width = `${W}px`;
+        innerPlane.style.height = `${H}px`;
+        innerPlane.style.transform = `scale(${scale})`;
+        innerPlane.style.transformOrigin = 'top left';
+
+        innerPlane.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+          ${this.buildFloorplanSVGMarkup(this.layoutMeta)}
+        </svg>`;
+
+        this.stalls.forEach(s => {
+          const pin = document.createElement('div');
+          const isSel = s.id === selectedStallId;
+          pin.className = `stall-marker status-${s.status}${isSel ? ' highlight-pulse' : ''}`;
+          pin.style.left = `${s.xPx + 1}px`;
+          pin.style.top = `${s.yPx + 1}px`;
+          pin.style.width = `${Math.max(24, s.wPx - 2)}px`;
+          pin.style.height = `${Math.max(20, s.hPx - 2)}px`;
+          if (isSel) {
+            pin.style.outline = '3px solid #0f172a';
+            pin.style.zIndex = '40';
+          }
+          pin.innerHTML = `<span class="marker-code">${s.code}</span>`;
+          pin.title = `Select Stall ${s.code} (${s.status.toUpperCase()})`;
+          pin.addEventListener('click', () => {
+            this.bookStallSelect.value = s.id;
+            this.populateBookingModalForStall(s.id);
+          });
+          innerPlane.appendChild(pin);
+        });
+
+        this.popupMapWorld.innerHTML = '';
+        this.popupMapWorld.appendChild(innerPlane);
+      }
+
+      closeBookingModal() {
+        this.bookingModal.classList.remove('active');
+      }
+
+      deleteStallBooking(stallId) {
+        const stall = this.stalls.find(s => s.id === stallId);
+        if (!stall) return;
+
+        const vendorLabel = stall.vendor ? ` for "${stall.vendor}"` : '';
+        if (!confirm(`Delete the booking on Stall ${stall.code}${vendorLabel} and mark it as Blank (Available)?`)) {
+          return;
+        }
+
+        stall.status = 'available';
+        stall.vendor = '';
+        stall.contact = '';
+        stall.phone = '';
+        stall.category = '';
+        stall.discount = 0;
+        stall.paid = 0;
+        stall.payRef = '';
+        stall.notes = stall.isPrime ? 'Prime Concourse / Corner Frontage' : '';
+        delete stall.receiptNo;
+
+        this.payments = this.payments.filter(p => p.stallId !== stall.id && p.stallCode !== stall.code);
+
+        this.leads.forEach(l => {
+          if (l.assignedStall === stall.code) {
+            l.assignedStall = '';
+            if (l.leadStatus === 'Participating Now') {
+              l.leadStatus = 'Interested / Follow-up';
+            }
+          }
+        });
+
+        this.saveAll();
+        this.closeBookingModal();
+        this.showToast(`Booking for Stall ${stall.code} deleted. Unit is now Blank (Available).`);
+      }
+
+      saveBookingFromModal(openReceiptAfter = false) {
+        const stallId = this.bookStallSelect.value;
+        const idx = this.stalls.findIndex(s => s.id === stallId);
+        if (idx === -1) return;
+
+        const status = this.bookStatusSelect.value;
+        const vendor = this.bookVendor.value.trim();
+        const contact = this.bookContact.value.trim();
+        const phone = this.bookPhone.value.trim();
+        const category = this.bookCategory.value.trim();
+        const price = parseFloat(this.bookPrice.value) || 0;
+        const discount = parseFloat(this.bookDiscount.value) || 0;
+        const paid = status === 'available' ? 0 : (parseFloat(this.bookPaid.value) || 0);
+        const payMode = this.bookPayMode.value;
+        const payRef = this.bookPayRef.value.trim();
+        const notes = this.bookNotes.value.trim();
+
+        const stall = this.stalls[idx];
+        stall.status = status;
+        stall.vendor = status === 'available' ? '' : vendor;
+        stall.contact = status === 'available' ? '' : contact;
+        stall.phone = status === 'available' ? '' : phone;
+        stall.category = status === 'available' ? '' : category;
+        stall.price = price;
+        stall.discount = discount;
+        stall.paid = paid;
+        stall.payMode = payMode;
+        stall.payRef = payRef;
+        stall.notes = notes;
+
+        if (status === 'available') {
+          this.payments = this.payments.filter(p => p.stallId !== stall.id && p.stallCode !== stall.code);
+        }
+
+        const selectedLeadId = this.bookLeadAutofill.value;
+        if (selectedLeadId && (status === 'booked' || status === 'reserved')) {
+          const lead = this.leads.find(l => l.id === selectedLeadId);
+          if (lead) {
+            lead.leadStatus = 'Participating Now';
+            lead.assignedStall = stall.code;
+          }
+        }
+
+        let receiptRecord = null;
+        if (status === 'booked' || status === 'reserved') {
+          const existingIdx = this.payments.findIndex(p => p.stallId === stall.id);
+          const rcpNo = existingIdx !== -1 ? this.payments[existingIdx].receiptNo : `RCP-2026-${1001 + this.payments.length}`;
+          receiptRecord = {
+            receiptNo: rcpNo,
+            date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+            stallId: stall.id,
+            stallCode: stall.code,
+            stallDims: `${stall.widthFt}×${stall.depthFt} ft (${stall.areaSqFt} sq.ft)`,
+            hallName: this.layoutMeta ? this.layoutMeta.hallName : 'Main Hall',
+            status,
+            vendor: vendor || 'Confirmed Exhibitor',
+            contact,
+            phone,
+            category,
+            price,
+            discount,
+            netAmount: Math.max(0, price - discount),
+            paid,
+            balance: Math.max(0, Math.max(0, price - discount) - paid),
+            payMode,
+            payRef: payRef || 'N/A',
+            notes
+          };
+
+          if (existingIdx !== -1) {
+            this.payments[existingIdx] = receiptRecord;
+          } else {
+            this.payments.unshift(receiptRecord);
+          }
+          stall.receiptNo = rcpNo;
+        }
+
+        this.saveAll();
+        this.closeBookingModal();
+        this.showToast(`Stall ${stall.code} updated (${status.toUpperCase()}).`);
+
+        if (openReceiptAfter && receiptRecord) {
+          this.showReceiptModal(receiptRecord);
+        }
+      }
+
+      // =====================================================================
+      // RECEIPT GENERATOR MODAL
+      // =====================================================================
+      openReceiptForStall(stallId) {
+        const stall = this.stalls.find(s => s.id === stallId);
+        if (!stall) return;
+        let rec = this.payments.find(p => p.stallId === stallId);
+        if (!rec) {
+          const net = Math.max(0, (stall.price || 0) - (stall.discount || 0));
+          rec = {
+            receiptNo: stall.receiptNo || `RCP-2026-${1001 + this.payments.length}`,
+            date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+            stallId: stall.id,
+            stallCode: stall.code,
+            stallDims: `${stall.widthFt}×${stall.depthFt} ft (${stall.areaSqFt} sq.ft)`,
+            hallName: this.layoutMeta ? this.layoutMeta.hallName : 'Main Hall',
+            status: stall.status,
+            vendor: stall.vendor || 'Exhibitor',
+            contact: stall.contact || '',
+            phone: stall.phone || '',
+            category: stall.category || '',
+            price: stall.price || 0,
+            discount: stall.discount || 0,
+            netAmount: net,
+            paid: stall.paid || 0,
+            balance: Math.max(0, net - (stall.paid || 0)),
+            payMode: stall.payMode || 'UPI',
+            payRef: stall.payRef || 'N/A',
+            notes: stall.notes || ''
+          };
+        }
+        this.showReceiptModal(rec);
+      }
+
+      showReceiptModal(rec) {
+        document.getElementById('rcp-no').textContent = rec.receiptNo;
+        document.getElementById('rcp-date').textContent = rec.date;
+        document.getElementById('rcp-status').textContent = rec.status;
+        document.getElementById('rcp-vendor').textContent = rec.vendor;
+        document.getElementById('rcp-contact').textContent = rec.contact ? `Contact: ${rec.contact}` : '';
+        document.getElementById('rcp-phone').textContent = rec.phone ? `Phone: ${rec.phone}` : '';
+        document.getElementById('rcp-category').textContent = rec.category || '';
+        document.getElementById('rcp-stall-code').textContent = `Stall ${rec.stallCode}`;
+        document.getElementById('rcp-stall-dims').textContent = `Size: ${rec.stallDims}`;
+        document.getElementById('rcp-hall-name').textContent = rec.hallName;
+        document.getElementById('rcp-table-stall').textContent = `Stall ${rec.stallCode} — ${rec.stallDims}`;
+        document.getElementById('rcp-price').textContent = `₹${(rec.price || 0).toLocaleString('en-IN')}`;
+        document.getElementById('rcp-discount').textContent = `- ₹${(rec.discount || 0).toLocaleString('en-IN')}`;
+        document.getElementById('rcp-net').textContent = `₹${(rec.netAmount || 0).toLocaleString('en-IN')}`;
+        document.getElementById('rcp-pay-mode').textContent = rec.payMode;
+        document.getElementById('rcp-pay-ref').textContent = rec.payRef;
+        document.getElementById('rcp-paid').textContent = `₹${(rec.paid || 0).toLocaleString('en-IN')}`;
+        document.getElementById('rcp-balance').textContent = `₹${(rec.balance || 0).toLocaleString('en-IN')}`;
+        document.getElementById('rcp-notes').textContent = rec.notes || 'None';
+
+        const waMsg = `*OFFICIAL STALL ALLOTMENT RECEIPT*\n` +
+          `*Allied & Last Mile Exhibitions*\n\n` +
+          `• *Receipt No:* ${rec.receiptNo}\n` +
+          `• *Date:* ${rec.date}\n` +
+          `• *Exhibitor:* ${rec.vendor}\n` +
+          `• *Stall Allotted:* ${rec.stallCode} (${rec.stallDims})\n` +
+          `• *Net Payable:* ₹${(rec.netAmount || 0).toLocaleString('en-IN')}\n` +
+          `• *Amount Paid:* ₹${(rec.paid || 0).toLocaleString('en-IN')} (${rec.payMode})\n` +
+          `• *Balance Due:* ₹${(rec.balance || 0).toLocaleString('en-IN')}\n\n` +
+          `Thank you for exhibiting with us.`;
+
+        const cleanPhone = (rec.phone || '').replace(/\D/g, '');
+        const targetPhone = cleanPhone.length >= 10 ? (cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone) : ADMIN_WHATSAPP_NUMBER;
+        document.getElementById('rcp-whatsapp-btn').href = `https://wa.me/${targetPhone}?text=${encodeURIComponent(waMsg)}`;
+
+        document.getElementById('receipt-modal').classList.add('active');
+      }
+
+      renderPaymentsTable() {
+        const tbody = document.getElementById('payments-table-body');
+        if (!tbody) return;
+        const q = (document.getElementById('payment-search-input')?.value || '').toLowerCase().trim();
+
+        const list = this.payments.filter(p =>
+          !q ||
+          p.receiptNo.toLowerCase().includes(q) ||
+          p.stallCode.toLowerCase().includes(q) ||
+          p.vendor.toLowerCase().includes(q) ||
+          (p.phone && p.phone.includes(q))
+        );
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--text-muted);">No booking payments recorded yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = list.map(p => `
+          <tr>
+            <td><strong>${p.receiptNo}</strong></td>
+            <td>${p.date}</td>
+            <td><span class="status-pill ${p.status}">${p.stallCode}</span></td>
+            <td><strong>${p.vendor}</strong><div style="font-size:0.7rem;color:var(--text-muted);">${p.contact || ''}</div></td>
+            <td>${p.phone || '—'}</td>
+            <td>₹${(p.netAmount || 0).toLocaleString('en-IN')}</td>
+            <td style="color:#0f766e;font-weight:700;">₹${(p.paid || 0).toLocaleString('en-IN')}</td>
+            <td style="color:${p.balance > 0 ? '#be123c' : '#64748b'};font-weight:700;">₹${(p.balance || 0).toLocaleString('en-IN')}</td>
+            <td>${p.payMode}<div style="font-size:0.68rem;color:var(--text-muted);">${p.payRef}</div></td>
+            <td>
+              <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
+                <button class="btn btn-sm btn-primary" onclick='window.app.showReceiptModal(${JSON.stringify(p).replace(/'/g, "&apos;")})'>
+                  Receipt
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="window.app.deleteStallBooking('${p.stallId}')" title="Delete this stall booking & receipt">
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // =====================================================================
+      // LAST MILE ONBOARDING & STALL LEADS CRM
+      // =====================================================================
+      saveLeadFromForm(openBookingPopupAfter = false) {
+        const leadStatus = document.getElementById('lead-status').value;
+        const fullName = document.getElementById('lead-name').value.trim();
+        const phone = document.getElementById('lead-phone').value.trim();
+        const brandName = document.getElementById('lead-brand').value.trim();
+        const category = document.getElementById('lead-category').value;
+        const city = document.getElementById('lead-city').value.trim();
+        const age = document.getElementById('lead-age').value.trim() || '30';
+        const gender = document.getElementById('lead-gender').value;
+        const address = document.getElementById('lead-address').value.trim() || city;
+        const link = document.getElementById('lead-link').value.trim();
+        const prefStall = document.getElementById('lead-pref-stall').value.trim();
+        const followupDate = document.getElementById('lead-followup').value;
+        const notes = document.getElementById('lead-notes').value.trim();
+
+        if (!fullName || !phone || !brandName) {
+          this.showToast('Please enter Contact Name, WhatsApp Phone, and Brand Name.');
+          return;
+        }
+
+        const cities = [];
+        document.querySelectorAll("input[name='leadCities']:checked").forEach(cb => cities.push(cb.value));
+        const targetCities = cities.join(', ') || 'Kolkata Only';
+
+        const seq = 1001 + this.leads.length;
+        const memberId = `MEM-2026-${seq}`;
+
+        const newLead = {
+          id: `LEAD_${Date.now()}`,
+          memberId,
+          fullName,
+          brandName,
+          phone,
+          age,
+          gender,
+          city,
+          address,
+          category,
+          link,
+          prefStall,
+          targetCities,
+          leadStatus,
+          followupDate,
+          notes,
+          assignedStall: '',
+          createdAt: new Date().toLocaleDateString('en-IN')
+        };
+
+        this.leads.unshift(newLead);
+        this.saveAll();
+
+        if (GOOGLE_SCRIPT_URL) {
+          fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              fullName,
+              phone,
+              age,
+              gender,
+              location: city,
+              address,
+              businessNature: category,
+              businessName: brandName,
+              travelReady: targetCities !== 'Kolkata Only' ? 'Yes' : 'No',
+              outstationCities: targetCities,
+              leadStatus,
+              notes
+            })
+          }).catch(() => {});
+        }
+
+        const ticket = document.getElementById('last-mile-ticket-preview');
+        ticket.style.display = 'block';
+        document.getElementById('ticket-member-id').textContent = memberId;
+        document.getElementById('ticket-holder-name').textContent = `${fullName} · ${brandName}`;
+        document.getElementById('ticket-status-text').textContent = leadStatus;
+
+        const waText = `*LAST MILE EXHIBITOR REGISTRATION*\n\n` +
+          `• *Member ID:* ${memberId}\n` +
+          `• *Name:* ${fullName}\n` +
+          `• *Brand:* ${brandName}\n` +
+          `• *Category:* ${category}\n` +
+          `• *Stage:* ${leadStatus}\n` +
+          `• *Target Cities:* ${targetCities}`;
+        document.getElementById('ticket-wa-link').href = `https://wa.me/${ADMIN_WHATSAPP_NUMBER}?text=${encodeURIComponent(waText)}`;
+
+        document.getElementById('lead-onboarding-form').reset();
+        this.showToast(`Lead registered (${memberId}).`);
+
+        if (openBookingPopupAfter) {
+          this.openBookingModal(null, newLead);
+        }
+      }
+
+      renderLeadsTable() {
+        const tbody = document.getElementById('leads-table-body');
+        if (!tbody) return;
+
+        const statusFilter = document.getElementById('lead-filter-select')?.value || 'all';
+        const q = (document.getElementById('lead-search-input')?.value || '').toLowerCase().trim();
+
+        const filtered = this.leads.filter(l => {
+          const matchStatus = statusFilter === 'all' || l.leadStatus === statusFilter;
+          const matchQ = !q ||
+            l.fullName.toLowerCase().includes(q) ||
+            l.brandName.toLowerCase().includes(q) ||
+            l.phone.includes(q) ||
+            l.memberId.toLowerCase().includes(q);
+          return matchStatus && matchQ;
+        });
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">No leads match the current filter.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = filtered.map(l => {
+          const isFuture = l.leadStatus.includes('Future');
+          const badgeStyle = isFuture
+            ? 'background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;'
+            : l.leadStatus.includes('Participating')
+              ? 'background:#dbeafe;color:#1e40af;'
+              : 'background:#fef3c7;color:#92400e;';
+
+          return `
+            <tr>
+              <td><strong>${l.memberId}</strong><div style="font-size:0.68rem;color:var(--text-muted);">${l.createdAt || ''}</div></td>
+              <td>
+                <strong>${l.brandName}</strong>
+                <div style="font-size:0.73rem;color:var(--text-secondary);">${l.fullName}</div>
+                ${l.prefStall ? `<div style="font-size:0.68rem;color:var(--primary);">Req: ${l.prefStall}</div>` : ''}
+              </td>
+              <td>
+                <a href="https://wa.me/91${l.phone.replace(/\D/g, '').slice(-10)}" target="_blank" style="color:var(--color-available);font-weight:700;text-decoration:none;">${l.phone}</a>
+                <div style="font-size:0.71rem;color:var(--text-muted);">${l.city}</div>
+              </td>
+              <td>
+                <div>${l.category}</div>
+                <div style="font-size:0.68rem;color:var(--text-muted);">${l.targetCities}</div>
+              </td>
+              <td>
+                <span class="status-pill" style="${badgeStyle}">${l.leadStatus}</span>
+                ${l.followupDate ? `<div style="font-size:0.68rem;color:var(--color-blocked);margin-top:2px;">Follow-up: ${l.followupDate}</div>` : ''}
+                ${l.notes ? `<div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">"${l.notes}"</div>` : ''}
+              </td>
+              <td>
+                ${l.assignedStall ? `<span class="status-pill booked">${l.assignedStall}</span>` : `<span style="font-size:0.72rem;color:var(--text-muted);">Unassigned</span>`}
+              </td>
+              <td>
+                <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
+                  <button class="btn btn-sm btn-primary" onclick="window.app.bookStallForLead('${l.id}')">
+                    Assign Stall
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="window.app.deleteLead('${l.id}')" title="Remove Lead">
+                    Remove
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      bookStallForLead(leadId) {
+        const lead = this.leads.find(l => l.id === leadId);
+        if (!lead) return;
+        this.openBookingModal(null, lead);
+      }
+
+      deleteLead(leadId) {
+        if (!confirm('Remove this lead from the directory?')) return;
+        this.leads = this.leads.filter(l => l.id !== leadId);
+        this.saveAll();
+      }
+
+      // =====================================================================
+      // CSV EXPORTS
+      // =====================================================================
+      exportStallsCSV() {
+        const headers = ['Stall Code', 'Section', 'Dimensions (ft)', 'Area (SqFt)', 'Status', 'Exhibitor/Brand', 'Contact', 'Phone', 'Price', 'Discount', 'Amount Paid', 'Balance Due', 'Payment Mode', 'Receipt No'];
+        const rows = this.stalls.map(s => {
+          const net = Math.max(0, (s.price || 0) - (s.discount || 0));
+          const bal = (s.status === 'booked' || s.status === 'reserved') ? Math.max(0, net - (s.paid || 0)) : 0;
+          return [
+            s.code,
+            s.section,
+            `${s.widthFt}x${s.depthFt}`,
+            s.areaSqFt,
+            s.status,
+            `"${(s.vendor || '').replace(/"/g, '""')}"`,
+            `"${(s.contact || '').replace(/"/g, '""')}"`,
+            s.phone || '',
+            s.price || 0,
+            s.discount || 0,
+            s.paid || 0,
+            bal,
+            `"${s.payMode || ''}"`,
+            s.receiptNo || ''
+          ].join(',');
+        });
+        this.downloadCSV([headers.join(','), ...rows].join('\n'), 'allied_stalls_report.csv');
+      }
+
+      exportLeadsCSV() {
+        const headers = ['Member ID', 'Date', 'Full Name', 'Brand Name', 'Phone', 'City', 'Category', 'Lead Status', 'Preferred Stall', 'Outstation Cities', 'Follow-up Date', 'Assigned Stall', 'Notes'];
+        const rows = this.leads.map(l => [
+          l.memberId,
+          l.createdAt || '',
+          `"${(l.fullName || '').replace(/"/g, '""')}"`,
+          `"${(l.brandName || '').replace(/"/g, '""')}"`,
+          l.phone || '',
+          `"${(l.city || '').replace(/"/g, '""')}"`,
+          `"${(l.category || '').replace(/"/g, '""')}"`,
+          `"${(l.leadStatus || '').replace(/"/g, '""')}"`,
+          `"${(l.prefStall || '').replace(/"/g, '""')}"`,
+          `"${(l.targetCities || '').replace(/"/g, '""')}"`,
+          l.followupDate || '',
+          l.assignedStall || '',
+          `"${(l.notes || '').replace(/"/g, '""')}"`
+        ].join(','));
+        this.downloadCSV([headers.join(','), ...rows].join('\n'), 'last_mile_stall_leads.csv');
+      }
+
+      exportPaymentsCSV() {
+        const headers = ['Receipt No', 'Date', 'Stall Code', 'Exhibitor/Brand', 'Phone', 'Net Amount', 'Amount Paid', 'Balance Due', 'Payment Mode', 'Reference'];
+        const rows = this.payments.map(p => [
+          p.receiptNo,
+          `"${p.date}"`,
+          p.stallCode,
+          `"${(p.vendor || '').replace(/"/g, '""')}"`,
+          p.phone || '',
+          p.netAmount || 0,
+          p.paid || 0,
+          p.balance || 0,
+          `"${p.payMode || ''}"`,
+          `"${(p.payRef || '').replace(/"/g, '""')}"`
+        ].join(','));
+        this.downloadCSV([headers.join(','), ...rows].join('\n'), 'stall_payments_receipts.csv');
+      }
+
+      downloadCSV(csvContent, filename) {
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      showToast(msg) {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+          container = document.createElement('div');
+          container.className = 'toast-container';
+          document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3400);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      window.app = new SmartStallPortalApp();
+    });
+  </script>
+</body>
+</html>
